@@ -28,7 +28,7 @@ class ModulesServiceProvider extends ServiceProvider
             __DIR__.'/../config/modules.php' => config_path('modules.php'),
         ], 'config');
 
-        $this->app['modules']->register();
+        $this->app['modules']->boot();
     }
 
     /**
@@ -45,13 +45,10 @@ class ModulesServiceProvider extends ServiceProvider
         $this->app->register(ConsoleServiceProvider::class);
         $this->app->register(GeneratorServiceProvider::class);
         $this->app->register(HelperServiceProvider::class);
-        $this->app->register(RepositoryServiceProvider::class);
         $this->app->register(BladeServiceProvider::class);
 
         $this->app->singleton('modules', function ($app) {
-            $repository = $app->make(Repository::class);
-
-            return new Modules($app, $repository);
+            return new ModuleRepositoriesFactory($app);
         });
     }
 

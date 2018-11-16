@@ -14,9 +14,9 @@ abstract class Repository implements RepositoryContract
     protected $location;
 
     /**
-     * @var array
+     * @var \Illuminate\Support\Collection
      */
-    protected $modules = [];
+    protected $modules;
 
     /**
      * Constructor method.
@@ -35,13 +35,17 @@ abstract class Repository implements RepositoryContract
 
     public function boot()
     {
+        $modules = collect();
+
         foreach (File::directories($this->getPath()) as $moduleDirectory) {
             $manifest = $this->getManifest($moduleDirectory);
 
-            $this->modules[$manifest['slug']] = $manifest;
+            $modules->put($manifest['slug'], $manifest);
 
             $this->registerServiceProvider($moduleDirectory);
         };
+
+        $this->modules = $modules;
     }
 
     public function getManifest($moduleDirectory)
@@ -49,7 +53,7 @@ abstract class Repository implements RepositoryContract
         $manifest = json_decode(File::get($moduleDirectory.'/module.json'), true);
 
         if (json_last_error() === JSON_ERROR_NONE) {
-            return $manifest;
+            return collect($manifest);
         }
 
         throw new Exception("Your JSON manifest file in was not properly formatted. [$moduleDirectory]");

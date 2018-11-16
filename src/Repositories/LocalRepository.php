@@ -5,42 +5,47 @@ namespace Caffeinated\Modules\Repositories;
 class LocalRepository extends Repository
 {
     /**
+     * Get all module manifest properties and store
+     * in the respective container.
+     *
+     * @return bool
+     */
+    public function optimize()
+    {
+        //
+    }
+
+    /**
      * Get all modules.
      *
-     * @return Collection
+     * @return \Illuminate\Support\Collection|array
      */
     public function all()
     {
-        return $this->getCache()->sortBy('order');
+        return $this->modules->sortBy('order');
     }
 
     /**
      * Get all module slugs.
      *
-     * @return Collection
+     * @return \Illuminate\Support\Collection|array
      */
     public function slugs()
     {
-        $slugs = collect();
-
-        $this->all()->each(function ($item, $key) use ($slugs) {
-            $slugs->push(strtolower($item['slug']));
-        });
-
-        return $slugs;
+        return $this->modules->pluck('slug');
     }
 
     /**
      * Get modules based on where clause.
      *
      * @param string $key
-     * @param mixed  $value
+     * @param mixed $value
      *
-     * @return Collection
+     * @return \Illuminate\Support\Collection|array
      */
     public function where($key, $value)
     {
-        return collect($this->all()->where($key, $value)->first());
+        return $this->modules->where($key, $value)->first();
     }
 
     /**
@@ -48,13 +53,11 @@ class LocalRepository extends Repository
      *
      * @param string $key
      *
-     * @return Collection
+     * @return \Illuminate\Support\Collection|array
      */
     public function sortBy($key)
     {
-        $collection = $this->all();
-
-        return $collection->sortBy($key);
+        return $this->modules->sortBy($key);
     }
 
     /**
@@ -62,13 +65,11 @@ class LocalRepository extends Repository
      *
      * @param string $key
      *
-     * @return Collection
+     * @return \Illuminate\Support\Collection|array
      */
     public function sortByDesc($key)
     {
-        $collection = $this->all();
-
-        return $collection->sortByDesc($key);
+        return $this->modules->sortBy($key, 'desc');
     }
 
     /**
@@ -80,32 +81,32 @@ class LocalRepository extends Repository
      */
     public function exists($slug)
     {
-        return ($this->slugs()->contains($slug) || $this->slugs()->contains(str_slug($slug)));
+        return $this->slugs()->contains($slug) || $this->slugs()->contains(str_slug($slug));
     }
 
     /**
-     * Returns count of all modules.
+     * Returns a count of all modules.
      *
      * @return int
      */
     public function count()
     {
-        return $this->all()->count();
+        return $this->modules->count();
     }
 
     /**
-     * Get a module property value.
+     * Returns the given module property.
      *
      * @param string $property
-     * @param mixed  $default
+     * @param mixed|null $default
      *
-     * @return mixed
+     * @return mixed|null
      */
     public function get($property, $default = null)
     {
         list($slug, $key) = explode('::', $property);
 
-        $module = $this->where('slug', $slug);
+        $module = $this->modules->where('slug', $slug);
 
         return $module->get($key, $default);
     }
@@ -114,7 +115,7 @@ class LocalRepository extends Repository
      * Set the given module property value.
      *
      * @param string $property
-     * @param mixed  $value
+     * @param mixed $value
      *
      * @return bool
      */
@@ -122,9 +123,7 @@ class LocalRepository extends Repository
     {
         list($slug, $key) = explode('::', $property);
 
-        $cachePath = $this->getCachePath();
-        $cache = $this->getCache();
-        $module = $this->where('slug', $slug);
+        $module = $this->modules->where('slug', $slug);
 
         if (isset($module[$key])) {
             unset($module[$key]);
@@ -132,10 +131,7 @@ class LocalRepository extends Repository
 
         $module[$key] = $value;
 
-        $module = collect([$module['basename'] => $module]);
-
-        $merged = $cache->merge($module);
-        $content = json_encode($merged->all(), JSON_PRETTY_PRINT);
+        $content = json_encode($module->all(), JSON_PRETTY_PRINT);
 
         return $this->files->put($cachePath, $content);
     }
@@ -143,25 +139,25 @@ class LocalRepository extends Repository
     /**
      * Get all enabled modules.
      *
-     * @return Collection
+     * @return \Illuminate\Support\Collection|array
      */
     public function enabled()
     {
-        return $this->all()->where('enabled', true);
+        // TODO: Implement enabled() method.
     }
 
     /**
      * Get all disabled modules.
      *
-     * @return Collection
+     * @return \Illuminate\Support\Collection|array
      */
     public function disabled()
     {
-        return $this->all()->where('enabled', false);
+        // TODO: Implement disabled() method.
     }
 
     /**
-     * Check if specified module is enabled.
+     * Determines if the specified module is enabled.
      *
      * @param string $slug
      *
@@ -169,13 +165,11 @@ class LocalRepository extends Repository
      */
     public function isEnabled($slug)
     {
-        $module = $this->where('slug', $slug);
-
-        return $module['enabled'] === true;
+        // TODO: Implement isEnabled() method.
     }
 
     /**
-     * Check if specified module is disabled.
+     * Determines if the specified module is disabled.
      *
      * @param string $slug
      *
@@ -183,9 +177,7 @@ class LocalRepository extends Repository
      */
     public function isDisabled($slug)
     {
-        $module = $this->where('slug', $slug);
-
-        return $module['enabled'] === false;
+        // TODO: Implement isDisabled() method.
     }
 
     /**
@@ -197,7 +189,7 @@ class LocalRepository extends Repository
      */
     public function enable($slug)
     {
-        return $this->set($slug.'::enabled', true);
+        // TODO: Implement enable() method.
     }
 
     /**
@@ -209,96 +201,6 @@ class LocalRepository extends Repository
      */
     public function disable($slug)
     {
-        return $this->set($slug.'::enabled', false);
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Optimization Methods
-    |--------------------------------------------------------------------------
-    |
-    */
-
-    /**
-     * Update cached repository of module information.
-     *
-     * @return bool
-     */
-    public function optimize()
-    {
-        $cachePath = $this->getCachePath();
-
-        $cache = $this->getCache();
-        $basenames = $this->getAllBasenames();
-        $modules = collect();
-
-        $basenames->each(function ($module, $key) use ($modules, $cache) {
-            $basename = collect(['basename' => $module]);
-            $temp = $basename->merge(collect($cache->get($module)));
-            $manifest = $temp->merge(collect($this->getManifest($module)));
-
-            $modules->put($module, $manifest);
-        });
-
-        $modules->each(function ($module) {
-            $module->put('id', crc32($module->get('slug')));
-
-            if (!$module->has('enabled')) {
-                $module->put('enabled', config('modules.enabled', true));
-            }
-
-            if (!$module->has('order')) {
-                $module->put('order', 9001);
-            }
-
-            return $module;
-        });
-
-        $content = json_encode($modules->all(), JSON_PRETTY_PRINT);
-
-        return $this->files->put($cachePath, $content);
-    }
-
-    /**
-     * Get the contents of the cache file.
-     *
-     * @return Collection
-     */
-    private function getCache()
-    {
-        $cachePath = $this->getCachePath();
-
-        if (!$this->files->exists($cachePath)) {
-            $this->createCache();
-
-            $this->optimize();
-        }
-
-        return collect(json_decode($this->files->get($cachePath), true));
-    }
-
-    /**
-     * Create an empty instance of the cache file.
-     *
-     * @return Collection
-     */
-    private function createCache()
-    {
-        $cachePath = $this->getCachePath();
-        $content = json_encode([], JSON_PRETTY_PRINT);
-
-        $this->files->put($cachePath, $content);
-
-        return collect(json_decode($content, true));
-    }
-
-    /**
-     * Get the path to the cache file.
-     *
-     * @return string
-     */
-    private function getCachePath()
-    {
-        return storage_path('app/modules.json');
+        // TODO: Implement disable() method.
     }
 }

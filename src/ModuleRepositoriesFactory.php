@@ -51,8 +51,8 @@ class ModuleRepositoriesFactory
         return config("modules.drivers.$driver");
     }
 
-//    public function __call($method, $arguments)
-//    {
-//        return call_user_func_array([$this->getModuleRepository(), $method], $arguments);
-//    }
+    public function __call($method, $arguments)
+    {
+        return call_user_func_array([$this->getModuleRepository(), $method], $arguments);
+    }
 }

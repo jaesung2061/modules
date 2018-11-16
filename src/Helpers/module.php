@@ -9,12 +9,14 @@ if (!function_exists('module_path')) {
      * @param string $slug
      * @param string $file
      *
+     * @param null $location
      * @return string
      * @throws \Caffeinated\Modules\Exceptions\ModuleNotFoundException
      */
-    function module_path($slug = null, $file = '')
+    function module_path($slug = null, $file = '', $location = null)
     {
-        $modulesPath = config('modules.path');
+        $location = $location ?: config('modules.default_location');
+        $modulesPath = config("modules.locations.$location.path");
         $pathMap = config('modules.pathMap');
 
         if (!empty($file) && !empty($pathMap)) {

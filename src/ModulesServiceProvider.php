@@ -48,7 +48,7 @@ class ModulesServiceProvider extends ServiceProvider
         $this->app->register(BladeServiceProvider::class);
 
         $this->app->singleton('modules', function ($app) {
-            return new ModuleRepositoriesFactory($app);
+            return new ModuleRepositoriesFactory();
         });
     }
 

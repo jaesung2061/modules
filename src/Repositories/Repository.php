@@ -26,7 +26,6 @@ abstract class Repository implements RepositoryContract
     public function __construct($location)
     {
         $this->location = $location;
-        $this->modules = $this->collectManifests();
     }
 
     public function getPath()
@@ -34,17 +33,15 @@ abstract class Repository implements RepositoryContract
         return config("modules.locations.$this->location.path");
     }
 
-    protected function collectManifests()
+    public function boot()
     {
-        $manifests = [];
-
         foreach (File::directories($this->getPath()) as $moduleDirectory) {
             $manifest = $this->getManifest($moduleDirectory);
 
-            $manifests[$manifest['slug']] = $manifest;
-        }
+            $this->modules[$manifest['slug']] = $manifest;
 
-        return $manifests;
+            $this->registerServiceProvider($moduleDirectory);
+        };
     }
 
     public function getManifest($moduleDirectory)
@@ -52,101 +49,27 @@ abstract class Repository implements RepositoryContract
         $manifest = json_decode(File::get($moduleDirectory.'/module.json'), true);
 
         if (json_last_error() === JSON_ERROR_NONE) {
-            return collect($manifest);
+            return $manifest;
         }
 
         throw new Exception("Your JSON manifest file in was not properly formatted. [$moduleDirectory]");
     }
 
-//    /**
-//     * Get a module's manifest contents.
-//     *
-//     * @param string $slug
-//     *
-//     * @return Collection|null
-//     */
-//    public function getManifest($slug)
-//    {
-//        $path     = $this->getManifestPath($slug);
-//        $contents = $this->files->get($path);
-//        $manifest = json_decode($contents, true);
-//
-//        if (json_last_error() === JSON_ERROR_NONE) {
-//            return collect($manifest);
-//        }
-//
-//        throw new Exception("[$slug] Your JSON manifest file was not properly formatted. Check for formatting issues and try again.");
-//    }
+    /**
+     * Register the module service provider.
+     *
+     * @param array $module
+     *
+     * @return void
+     */
+    protected function registerServiceProvider($moduleDirectory)
+    {
+        $locationNamespace = trim(config("modules.locations.$this->location.namespace"), '\\');
+        $moduleNamespace = trim(array_last(explode(DIRECTORY_SEPARATOR, $moduleDirectory)), '\\');
+        $serviceProvider = $locationNamespace.'\\'.$moduleNamespace.'\\'.config('modules.provider_class');
 
-//    /**
-//     * Get all module basenames.
-//     *
-//     * @return array
-//     */
-//    protected function getAllBasenames()
-//    {
-//        try {
-//            $collection = collect(app('storage')->directories($this->getPath()));
-//
-//            return $collection->map(function ($item, $key) {
-//                return basename($item);
-//            });
-//        } catch (\InvalidArgumentException $e) {
-//            return collect([]);
-//        }
-//    }
-
-//    /**
-//     * Set modules path in "RunTime" mode.
-//     *
-//     * @param string $path
-//     *
-//     * @return object $this
-//     */
-//    public function setPath($path)
-//    {
-//        $this->path = $path;
-//
-//        return $this;
-//    }
-//
-//    /**
-//     * Get path for the specified module.
-//     *
-//     * @param string $slug
-//     *
-//     * @return string
-//     */
-//    public function getModulePath($slug)
-//    {
-//        $module = studly_case(str_slug($slug));
-//
-//        if (\File::exists($this->getPath()."/{$module}/")) {
-//            return $this->getPath()."/{$module}/";
-//        }
-//
-//        return $this->getPath()."/{$slug}/";
-//    }
-//
-//    /**
-//     * Get path of module manifest file.
-//     *
-//     * @param $slug
-//     *
-//     * @return string
-//     */
-//    protected function getManifestPath($slug)
-//    {
-//        return $this->getModulePath($slug).'module.json';
-//    }
-//
-//    /**
-//     * Get modules namespace.
-//     *
-//     * @return string
-//     */
-//    public function getNamespace()
-//    {
-//        return rtrim($this->config->get('modules.namespace'), '/\\');
-//    }
+        if (class_exists($serviceProvider)) {
+            app()->register($serviceProvider);
+        }
+    }
 }

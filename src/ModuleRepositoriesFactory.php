@@ -5,33 +5,27 @@ namespace Caffeinated\Modules;
 class ModuleRepositoriesFactory
 {
     /**
-     * @var \Illuminate\Contracts\Foundation\Application
-     */
-    protected $app;
-
-    /**
      * @var \Caffeinated\Modules\Contracts\Repository[]
      */
     protected $repositories = [];
 
-    /**
-     * ModulesFactory constructor.
-     *
-     * @param \Illuminate\Contracts\Foundation\Application $app
-     */
-    public function __construct($app)
+    public function location($location = null)
     {
-        $this->app = $app;
+        return $this->getModuleRepository($location);
     }
 
     public function boot()
     {
         foreach (array_keys(config('modules.locations')) as $location) {
-            $this->repositories[$location] = $this->getModuleRepository();
+            $repository = $this->getModuleRepository($location);
+
+            $repository->boot();
+
+            $this->repositories[$location] = $repository;
         }
     }
 
-    public function getModuleRepository($location = null)
+    protected function getModuleRepository($location = null)
     {
         $location = $location ?: $this->getDefaultLocation();
         $driverClass = $this->getRepositoryClass($location);
@@ -56,4 +50,9 @@ class ModuleRepositoriesFactory
 
         return config("modules.drivers.$driver");
     }
+
+//    public function __call($method, $arguments)
+//    {
+//        return call_user_func_array([$this->getModuleRepository(), $method], $arguments);
+//    }
 }

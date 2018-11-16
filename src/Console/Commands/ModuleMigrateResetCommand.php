@@ -2,15 +2,15 @@
 
 namespace Caffeinated\Modules\Console\Commands;
 
+use Caffeinated\Modules\Console\BaseModuleCommand;
 use Caffeinated\Modules\ModuleRepositoriesFactory;
-use Illuminate\Console\Command;
 use Illuminate\Console\ConfirmableTrait;
 use Illuminate\Database\Migrations\Migrator;
 use Illuminate\Filesystem\Filesystem;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 
-class ModuleMigrateResetCommand extends Command
+class ModuleMigrateResetCommand extends BaseModuleCommand
 {
     use ConfirmableTrait;
 

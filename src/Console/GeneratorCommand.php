@@ -8,6 +8,8 @@ use Module;
 
 abstract class GeneratorCommand extends LaravelGeneratorCommand
 {
+    use LocationConfig;
+
     /**
      * Parse the name and format according to the root namespace.
      *

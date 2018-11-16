@@ -2,12 +2,12 @@
 
 namespace Caffeinated\Modules\Console\Commands;
 
-use Illuminate\Console\Command;
+use Caffeinated\Modules\Console\BaseModuleCommand;
 use Illuminate\Console\ConfirmableTrait;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 
-class ModuleMigrateRefreshCommand extends Command
+class ModuleMigrateRefreshCommand extends BaseModuleCommand
 {
     use ConfirmableTrait;
 

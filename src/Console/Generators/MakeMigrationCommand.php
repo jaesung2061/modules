@@ -2,9 +2,9 @@
 
 namespace Caffeinated\Modules\Console\Generators;
 
-use Illuminate\Console\Command;
+use Caffeinated\Modules\Console\BaseModuleCommand;
 
-class MakeMigrationCommand extends Command
+class MakeMigrationCommand extends BaseModuleCommand
 {
     /**
      * The name and signature of the console command.

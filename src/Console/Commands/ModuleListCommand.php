@@ -2,10 +2,10 @@
 
 namespace Caffeinated\Modules\Console\Commands;
 
+use Caffeinated\Modules\Console\BaseModuleCommand;
 use Caffeinated\Modules\ModuleRepositoriesFactory;
-use Illuminate\Console\Command;
 
-class ModuleListCommand extends Command
+class ModuleListCommand extends BaseModuleCommand
 {
     /**
      * The console command name.

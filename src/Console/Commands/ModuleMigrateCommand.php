@@ -2,14 +2,14 @@
 
 namespace Caffeinated\Modules\Console\Commands;
 
-use Illuminate\Console\Command;
+use Caffeinated\Modules\Console\BaseModuleCommand;
 use Illuminate\Console\ConfirmableTrait;
 use Illuminate\Database\Migrations\Migrator;
 use Illuminate\Support\Arr;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 
-class ModuleMigrateCommand extends Command
+class ModuleMigrateCommand extends BaseModuleCommand
 {
     use ConfirmableTrait;
 

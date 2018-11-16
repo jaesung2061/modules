@@ -2,15 +2,15 @@
 
 namespace Caffeinated\Modules\Console\Commands;
 
+use Caffeinated\Modules\Console\BaseModuleCommand;
 use Caffeinated\Modules\ModuleRepositoriesFactory;
 use Caffeinated\Modules\Traits\MigrationTrait;
-use Illuminate\Console\Command;
 use Illuminate\Console\ConfirmableTrait;
 use Illuminate\Database\Migrations\Migrator;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 
-class ModuleMigrateRollbackCommand extends Command
+class ModuleMigrateRollbackCommand extends BaseModuleCommand
 {
     use MigrationTrait, ConfirmableTrait;
 

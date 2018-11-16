@@ -2,12 +2,12 @@
 
 namespace Caffeinated\Modules\Console\Commands;
 
+use Caffeinated\Modules\Console\BaseModuleCommand;
 use Caffeinated\Modules\ModuleRepositoriesFactory;
-use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 
-class ModuleSeedCommand extends Command
+class ModuleSeedCommand extends BaseModuleCommand
 {
     /**
      * The console command name.

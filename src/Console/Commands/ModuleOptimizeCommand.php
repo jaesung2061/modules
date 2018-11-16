@@ -2,9 +2,9 @@
 
 namespace Caffeinated\Modules\Console\Commands;
 
-use Illuminate\Console\Command;
+use Caffeinated\Modules\Console\BaseModuleCommand;
 
-class ModuleOptimizeCommand extends Command
+class ModuleOptimizeCommand extends BaseModuleCommand
 {
     /**
      * The console command name.

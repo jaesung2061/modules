@@ -46,7 +46,7 @@ abstract class Repository implements RepositoryContract
             $manifest['order'] = $manifest['order'] ?? 9999;
             $manifest['enabled'] = $manifest['enabled'] ?? config('modules.enabled');
 
-            $modules->push($manifest);
+            $modules->put($manifest['slug'], $manifest);
         };
 
         $this->modules = $modules->sort(function ($a, $b) {

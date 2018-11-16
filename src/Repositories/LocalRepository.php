@@ -95,9 +95,7 @@ class LocalRepository extends Repository
     {
         list($slug, $key) = explode('::', $property);
 
-        $module = $this->modules->where('slug', $slug);
-
-        return $module->get($key, $default);
+        return $this->modules->where('slug', $slug)->first()->get($key, $default);
     }
 
     /**

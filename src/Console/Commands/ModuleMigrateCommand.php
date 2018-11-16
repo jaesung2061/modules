@@ -2,7 +2,6 @@
 
 namespace Caffeinated\Modules\Console\Commands;
 
-use Caffeinated\Modules\ModuleRepositoriesFactory;
 use Illuminate\Console\Command;
 use Illuminate\Console\ConfirmableTrait;
 use Illuminate\Database\Migrations\Migrator;
@@ -19,7 +18,7 @@ class ModuleMigrateCommand extends Command
      *
      * @var string
      */
-    protected $name = 'module:migrate';
+    protected $signature = 'module:migrate {slug?} {--location=} {--database=} {--force} {--seed}';
 
     /**
      * The console command description.
@@ -27,11 +26,6 @@ class ModuleMigrateCommand extends Command
      * @var string
      */
     protected $description = 'Run the database migrations for a specific or all modules';
-
-    /**
-     * @var ModuleRepositoriesFactory
-     */
-    protected $module;
 
     /**
      * @var Migrator
@@ -42,14 +36,12 @@ class ModuleMigrateCommand extends Command
      * Create a new command instance.
      *
      * @param Migrator $migrator
-     * @param ModuleRepositoriesFactory  $module
      */
-    public function __construct(Migrator $migrator, ModuleRepositoriesFactory $module)
+    public function __construct(Migrator $migrator)
     {
         parent::__construct();
 
         $this->migrator = $migrator;
-        $this->module = $module;
     }
 
     /**
@@ -61,10 +53,12 @@ class ModuleMigrateCommand extends Command
     {
         $this->prepareDatabase();
 
-        if (!empty($this->argument('slug'))) {
-            $module = $this->module->where('slug', $this->argument('slug'));
+        $location = $this->option('location');
 
-            if ($this->module->isEnabled($module['slug'])) {
+        if (!empty($this->argument('slug'))) {
+            $module = modules($location)->where('slug', $this->argument('slug'));
+
+            if (modules($location)->isEnabled($module['slug'])) {
                 return $this->migrate($module['slug']);
             } elseif ($this->option('force')) {
                 return $this->migrate($module['slug']);
@@ -73,9 +67,9 @@ class ModuleMigrateCommand extends Command
             }
         } else {
             if ($this->option('force')) {
-                $modules = $this->module->all();
+                $modules = modules($location)->all();
             } else {
-                $modules = $this->module->enabled();
+                $modules = modules($location)->enabled();
             }
 
             foreach ($modules as $module) {
@@ -93,8 +87,10 @@ class ModuleMigrateCommand extends Command
      */
     protected function migrate($slug)
     {
-        if ($this->module->exists($slug)) {
-            $module = $this->module->where('slug', $slug);
+        $location = $this->option('location');
+
+        if (modules($location)->exists($slug)) {
+            $module = modules($location)->where('slug', $slug);
             $pretend = Arr::get($this->option(), 'pretend', false);
             $step = Arr::get($this->option(), 'step', false);
             $path = $this->getMigrationPath($slug);

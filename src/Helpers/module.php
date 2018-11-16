@@ -2,6 +2,12 @@
 
 use Caffeinated\Modules\Exceptions\ModuleNotFoundException;
 
+if (!function_exists('modules')) {
+    function modules($location = null) {
+        return app('modules')->location($location);
+    }
+}
+
 if (!function_exists('module_path')) {
     /**
      * Return the path to the given module file.

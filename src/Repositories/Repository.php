@@ -5,7 +5,6 @@ namespace Caffeinated\Modules\Repositories;
 use Exception;
 use Caffeinated\Modules\Contracts\Repository as RepositoryContract;
 use Illuminate\Support\Facades\File;
-use function Symfony\Component\Debug\Tests\testHeader;
 
 abstract class Repository implements RepositoryContract
 {
@@ -44,11 +43,21 @@ abstract class Repository implements RepositoryContract
             // add base namespace to manifest
             $manifest['basename'] = $basename = $this->getModuleNamespace($moduleDirectory);
             $manifest['order'] = $manifest['order'] ?? 9999;
+            $manifest['enabled'] = $manifest['enabled'] ?? config('modules.enabled');
 
             $modules->push($manifest);
         };
 
-        $this->modules = $modules;
+        $this->modules = $modules->sort(function ($a, $b) {
+            $a = $a['order'];
+            $b = $b['order'];
+
+            if ($a == $b) {
+                return 0;
+            }
+
+            return ($a < $b) ? -1 : 1;
+        });
 
         foreach ($this->all() as $module) {
             $this->registerServiceProvider($module);
@@ -57,7 +66,9 @@ abstract class Repository implements RepositoryContract
                 $basePath = config("modules.locations.$this->location.path");
                 $filePath = "$basePath/$basename/$file";
 
-                require $filePath;
+                if (File::exists($filePath)) {
+                    require $filePath;
+                }
             }
         }
     }

@@ -11,16 +11,7 @@ class LocalRepository extends Repository
      */
     public function all()
     {
-        return $this->modules->sort(function ($a, $b) {
-            $a = $a['order'] ?? 99999;
-            $b = $b['order'] ?? 99999;
-
-            if ($a == $b) {
-                return 0;
-            }
-
-            return ($a < $b) ? -1 : 1;
-        });
+        return $this->modules;
     }
 
     /**

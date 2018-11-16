@@ -30,6 +30,10 @@ class ModuleRepositoriesFactory
         $location = $location ?: $this->getDefaultLocation();
         $driverClass = $this->getRepositoryClass($location);
 
+        if (! $driverClass) {
+            throw new \Exception("[$location] not found. Check your module locations configuration.");
+        }
+
         return $this->repositories[$location] ?? new $driverClass($location);
     }
 

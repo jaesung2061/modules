@@ -41,6 +41,7 @@ abstract class Repository implements RepositoryContract
             $manifest = $this->getManifest($moduleDirectory);
 
             // add base namespace to manifest
+            $manifest['id'] = crc32($manifest->get('slug'));
             $manifest['basename'] = $basename = $this->getModuleNamespace($moduleDirectory);
             $manifest['order'] = $manifest['order'] ?? 9999;
             $manifest['enabled'] = $manifest['enabled'] ?? config('modules.enabled');

@@ -5,24 +5,22 @@ namespace Caffeinated\Modules\Repositories;
 class LocalRepository extends Repository
 {
     /**
-     * Get all module manifest properties and store
-     * in the respective container.
-     *
-     * @return bool
-     */
-    public function optimize()
-    {
-        //
-    }
-
-    /**
      * Get all modules.
      *
      * @return \Illuminate\Support\Collection|array
      */
     public function all()
     {
-        return $this->modules->sortBy('order');
+        return $this->modules->sort(function ($a, $b) {
+            $a = $a['order'] ?? 99999;
+            $b = $b['order'] ?? 99999;
+
+            if ($a == $b) {
+                return 0;
+            }
+
+            return ($a < $b) ? -1 : 1;
+        });
     }
 
     /**
@@ -130,10 +128,6 @@ class LocalRepository extends Repository
         }
 
         $module[$key] = $value;
-
-        $content = json_encode($module->all(), JSON_PRETTY_PRINT);
-
-        return $this->files->put($cachePath, $content);
     }
 
     /**
@@ -143,7 +137,7 @@ class LocalRepository extends Repository
      */
     public function enabled()
     {
-        // TODO: Implement enabled() method.
+        return $this->modules->where('enabled', true);
     }
 
     /**
@@ -153,7 +147,7 @@ class LocalRepository extends Repository
      */
     public function disabled()
     {
-        // TODO: Implement disabled() method.
+        return $this->modules->where('enabled', false);
     }
 
     /**
@@ -165,7 +159,9 @@ class LocalRepository extends Repository
      */
     public function isEnabled($slug)
     {
-        // TODO: Implement isEnabled() method.
+        $module = $this->modules->where('slug', $slug);
+
+        return $module['enabled'] === true;
     }
 
     /**
@@ -177,7 +173,9 @@ class LocalRepository extends Repository
      */
     public function isDisabled($slug)
     {
-        // TODO: Implement isDisabled() method.
+        $module = $this->modules->where('slug', $slug);
+
+        return $module['enabled'] === false;
     }
 
     /**
@@ -189,7 +187,7 @@ class LocalRepository extends Repository
      */
     public function enable($slug)
     {
-        // TODO: Implement enable() method.
+        return $this->set($slug.'::enabled', true);
     }
 
     /**
@@ -201,6 +199,18 @@ class LocalRepository extends Repository
      */
     public function disable($slug)
     {
-        // TODO: Implement disable() method.
+        return $this->set($slug.'::enabled', true);
+    }
+
+
+    /**
+     * Get all module manifest properties and store
+     * in the respective container.
+     *
+     * @return bool
+     */
+    public function optimize()
+    {
+        //
     }
 }

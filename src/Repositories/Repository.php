@@ -5,6 +5,7 @@ namespace Caffeinated\Modules\Repositories;
 use Exception;
 use Caffeinated\Modules\Contracts\Repository as RepositoryContract;
 use Illuminate\Support\Facades\File;
+use function Symfony\Component\Debug\Tests\testHeader;
 
 abstract class Repository implements RepositoryContract
 {
@@ -40,12 +41,25 @@ abstract class Repository implements RepositoryContract
         foreach (File::directories($this->getPath()) as $moduleDirectory) {
             $manifest = $this->getManifest($moduleDirectory);
 
-            $modules->put($manifest['slug'], $manifest);
+            // add base namespace to manifest
+            $manifest['basename'] = $basename = $this->getModuleNamespace($moduleDirectory);
+            $manifest['order'] = $manifest['order'] ?? 9999;
 
-            $this->registerServiceProvider($moduleDirectory);
+            $modules->push($manifest);
         };
 
         $this->modules = $modules;
+
+        foreach ($this->all() as $module) {
+            $this->registerServiceProvider($module);
+
+            foreach ($module['autoload'] ?? [] as $file) {
+                $basePath = config("modules.locations.$this->location.path");
+                $filePath = "$basePath/$basename/$file";
+
+                require $filePath;
+            }
+        }
     }
 
     public function getManifest($moduleDirectory)
@@ -62,18 +76,25 @@ abstract class Repository implements RepositoryContract
     /**
      * Register the module service provider.
      *
-     * @param array $module
-     *
+     * @param $moduleDirectory
      * @return void
      */
-    protected function registerServiceProvider($moduleDirectory)
+    protected function registerServiceProvider($module)
     {
         $locationNamespace = trim(config("modules.locations.$this->location.namespace"), '\\');
-        $moduleNamespace = trim(array_last(explode(DIRECTORY_SEPARATOR, $moduleDirectory)), '\\');
-        $serviceProvider = $locationNamespace.'\\'.$moduleNamespace.'\\'.config('modules.provider_class');
+        $serviceProvider = $locationNamespace.'\\'.$module['basename'].'\\'.config('modules.provider_class');
 
         if (class_exists($serviceProvider)) {
             app()->register($serviceProvider);
         }
+    }
+
+    /**
+     * @param $moduleDirectory
+     * @return string
+     */
+    protected function getModuleNamespace($moduleDirectory)
+    {
+        return trim(array_last(explode(DIRECTORY_SEPARATOR, $moduleDirectory)), '\\');
     }
 }

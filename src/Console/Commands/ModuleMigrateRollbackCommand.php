@@ -2,7 +2,7 @@
 
 namespace Caffeinated\Modules\Console\Commands;
 
-use Caffeinated\Modules\Modules;
+use Caffeinated\Modules\ModuleRepositoriesFactory;
 use Caffeinated\Modules\Traits\MigrationTrait;
 use Illuminate\Console\Command;
 use Illuminate\Console\ConfirmableTrait;
@@ -44,9 +44,9 @@ class ModuleMigrateRollbackCommand extends Command
      * Create a new command instance.
      *
      * @param Migrator $migrator
-     * @param Modules  $module
+     * @param ModuleRepositoriesFactory  $module
      */
-    public function __construct(Migrator $migrator, Modules $module)
+    public function __construct(Migrator $migrator, ModuleRepositoriesFactory $module)
     {
         parent::__construct();
 

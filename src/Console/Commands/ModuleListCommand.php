@@ -3,7 +3,7 @@
 namespace Caffeinated\Modules\Console\Commands;
 
 use Caffeinated\Modules\Console\BaseModuleCommand;
-use Caffeinated\Modules\ModuleRepositoriesFactory;
+use Caffeinated\Modules\Contracts\Repository;
 
 class ModuleListCommand extends BaseModuleCommand
 {
@@ -12,7 +12,7 @@ class ModuleListCommand extends BaseModuleCommand
      *
      * @var string
      */
-    protected $name = 'module:list';
+    protected $signature = 'module:list';
 
     /**
      * The console command description.
@@ -22,28 +22,11 @@ class ModuleListCommand extends BaseModuleCommand
     protected $description = 'List all application modules';
 
     /**
-     * @var ModuleRepositoriesFactory
-     */
-    protected $module;
-
-    /**
      * The table headers for the command.
      *
      * @var array
      */
-    protected $headers = ['#', 'Name', 'Slug', 'Description', 'Status'];
-
-    /**
-     * Create a new command instance.
-     *
-     * @param ModuleRepositoriesFactory $module
-     */
-    public function __construct(ModuleRepositoriesFactory $module)
-    {
-        parent::__construct();
-
-        $this->module = $module;
-    }
+    protected $headers = ['#', 'Location', 'Name', 'Slug', 'Description', 'Status'];
 
     /**
      * Execute the console command.
@@ -52,27 +35,30 @@ class ModuleListCommand extends BaseModuleCommand
      */
     public function handle()
     {
-        $modules = $this->module->all();
+        foreach (modules()->repositories() as $repository) {
+            $modules = $repository->all();
 
-        if (count($modules) == 0) {
-            return $this->error("Your application doesn't have any modules.");
+            if (count($modules) == 0) {
+                $this->error("Your application doesn't have any modules.");
+            }
+
+            $this->displayModules($this->getModules($repository));
         }
-
-        $this->displayModules($this->getModules());
     }
 
     /**
      * Get all modules.
      *
+     * @param \Caffeinated\Modules\Contracts\Repository $repository
      * @return array
      */
-    protected function getModules()
+    protected function getModules(Repository $repository)
     {
-        $modules = $this->module->all();
+        $modules = $repository->all();
         $results = [];
 
         foreach ($modules as $module) {
-            $results[] = $this->getModuleInformation($module);
+            $results[] = $this->getModuleInformation($repository->location, $module);
         }
 
         return array_filter($results);
@@ -81,14 +67,15 @@ class ModuleListCommand extends BaseModuleCommand
     /**
      * Returns module manifest information.
      *
-     * @param string $module
-     *
+     * @param string $location
+     * @param array $module
      * @return array
      */
-    protected function getModuleInformation($module)
+    protected function getModuleInformation($location, $module)
     {
         return [
             '#'           => $module['order'],
+            'location'    => $location,
             'name'        => isset($module['name']) ? $module['name'] : '',
             'slug'        => $module['slug'],
             'description' => isset($module['description']) ? $module['description'] : '',

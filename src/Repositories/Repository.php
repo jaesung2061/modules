@@ -11,7 +11,7 @@ abstract class Repository implements RepositoryContract
     /**
      * @var string
      */
-    protected $location;
+    public $location;
 
     /**
      * @var \Illuminate\Support\Collection

@@ -3,8 +3,18 @@
 use Caffeinated\Modules\Exceptions\ModuleNotFoundException;
 
 if (!function_exists('modules')) {
+    /**
+     * Get modules repository.
+     *
+     * @param string $location
+     * @return mixed
+     */
     function modules($location = null) {
-        return app('modules')->location($location);
+        if ($location) {
+            return app('modules')->location($location);
+        }
+
+        return app('modules');
     }
 }
 
@@ -21,8 +31,7 @@ if (!function_exists('module_path')) {
      */
     function module_path($slug = null, $file = '', $location = null)
     {
-        $location = $location ?: config('modules.default_location');
-        $modulesPath = config("modules.locations.$location.path");
+        $modulesPath = module_location_config($location);
         $pathMap = config('modules.pathMap');
 
         if (!empty($file) && !empty($pathMap)) {
@@ -75,4 +84,20 @@ if (!function_exists('module_class')) {
 
         return "{$namespace}\\{$class}";
     }
+}
+
+/**
+ * @param string $location
+ * @param string $key
+ * @return \Illuminate\Config\Repository|mixed
+ */
+function module_location_config($location = null, $key = null)
+{
+    $location = $location ?: config('modules.default_location');
+
+    if ($key) {
+        return config("modules.locations.$location.$key");
+    }
+
+    return config("modules.locations.$location");
 }

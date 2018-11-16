@@ -25,6 +25,11 @@ class ModuleRepositoriesFactory
         }
     }
 
+    public function repositories()
+    {
+        return $this->repositories;
+    }
+
     protected function getModuleRepository($location = null)
     {
         $location = $location ?: $this->getDefaultLocation();

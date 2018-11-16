@@ -19,7 +19,7 @@ abstract class GeneratorCommand extends LaravelGeneratorCommand
      */
     protected function qualifyClass($name)
     {
-        $rootNamespace = config('modules.namespace');
+        $rootNamespace = $this->getLocationConfig('namespace');
 
         if (Str::startsWith($name, $rootNamespace)) {
             return $name;
@@ -46,6 +46,7 @@ abstract class GeneratorCommand extends LaravelGeneratorCommand
 
         // take everything after the module name in the given path (ignoring case)
         $key = array_search(strtolower($module['basename']), explode('\\', strtolower($name)));
+
         if ($key === false) {
             $newPath = str_replace('\\', '/', $name);
         } else {

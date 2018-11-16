@@ -12,7 +12,7 @@ class ModuleDisableCommand extends BaseModuleCommand
      *
      * @var string
      */
-    protected $name = 'module:disable';
+    protected $signature = 'module:disable {slug} {--location=}';
 
     /**
      * The console command description.
@@ -29,11 +29,12 @@ class ModuleDisableCommand extends BaseModuleCommand
     public function handle()
     {
         $slug = $this->argument('slug');
+        $modules = modules($this->option('location'));
 
-        if ($this->laravel['modules']->isEnabled($slug)) {
-            $this->laravel['modules']->disable($slug);
+        if ($modules->isEnabled($slug)) {
+            $modules->disable($slug);
 
-            $module = $this->laravel['modules']->where('slug', $slug);
+            $module = $modules->where('slug', $slug);
 
             event($slug.'.module.disabled', [$module, null]);
 

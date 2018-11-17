@@ -3,7 +3,7 @@
 namespace Caffeinated\Modules\Console\Commands;
 
 use Caffeinated\Modules\Console\BaseModuleCommand;
-use Caffeinated\Modules\Contracts\Repository;
+use Caffeinated\Modules\Repositories\Repository;
 
 class ModuleListCommand extends BaseModuleCommand
 {
@@ -49,7 +49,7 @@ class ModuleListCommand extends BaseModuleCommand
     /**
      * Get all modules.
      *
-     * @param \Caffeinated\Modules\Contracts\Repository $repository
+     * @param $repository
      * @return array
      */
     protected function getModules(Repository $repository)
@@ -58,7 +58,7 @@ class ModuleListCommand extends BaseModuleCommand
         $results = [];
 
         foreach ($modules as $module) {
-            $results[] = $this->getModuleInformation($repository->location, $module);
+            $results[] = $this->getModuleInformation($repository, $module);
         }
 
         return array_filter($results);
@@ -67,19 +67,19 @@ class ModuleListCommand extends BaseModuleCommand
     /**
      * Returns module manifest information.
      *
-     * @param string $location
+     * @param Repository $repository
      * @param array $module
      * @return array
      */
-    protected function getModuleInformation($location, $module)
+    protected function getModuleInformation(Repository $repository, $module)
     {
         return [
             '#'           => $module['order'],
-            'location'    => $location,
+            'location'    => $repository->location,
             'name'        => isset($module['name']) ? $module['name'] : '',
             'slug'        => $module['slug'],
             'description' => isset($module['description']) ? $module['description'] : '',
-            'status'      => ($this->module->isEnabled($module['slug'])) ? 'Enabled' : 'Disabled',
+            'status'      => (modules($repository->location)->isEnabled($module['slug'])) ? 'Enabled' : 'Disabled',
         ];
     }
 

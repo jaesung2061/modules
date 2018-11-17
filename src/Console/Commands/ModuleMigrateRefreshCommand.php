@@ -16,7 +16,7 @@ class ModuleMigrateRefreshCommand extends BaseModuleCommand
      *
      * @var string
      */
-    protected $name = 'module:migrate:refresh';
+    protected $signature = 'module:migrate:refresh {slug?} {--location}';
 
     /**
      * The console command description.
@@ -55,7 +55,7 @@ class ModuleMigrateRefreshCommand extends BaseModuleCommand
         }
 
         if (isset($slug)) {
-            $module = $this->laravel['modules']->where('slug', $slug);
+            $module = modules($this->option('location'))->where('slug', $slug);
 
             event($slug.'.module.refreshed', [$module, $this->option()]);
 

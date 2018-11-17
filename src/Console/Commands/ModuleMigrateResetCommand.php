@@ -19,7 +19,7 @@ class ModuleMigrateResetCommand extends BaseModuleCommand
      *
      * @var string
      */
-    protected $name = 'module:migrate:reset';
+    protected $signature = 'module:migrate:reset {slug?} {--location}';
 
     /**
      * The console command description.
@@ -80,8 +80,6 @@ class ModuleMigrateResetCommand extends BaseModuleCommand
      * migrated up as. This ensures the database is properly reversed
      * without conflict.
      *
-     * @param string $slug
-     *
      * @return mixed
      */
     protected function reset()
@@ -110,9 +108,8 @@ class ModuleMigrateResetCommand extends BaseModuleCommand
     /**
      * Run "down" a migration instance.
      *
-     * @param string $slug
+     * @param $file
      * @param object $migration
-     * @param bool   $pretend
      */
     protected function runDown($file, $migration)
     {
@@ -131,13 +128,23 @@ class ModuleMigrateResetCommand extends BaseModuleCommand
      *
      * @return array
      */
-    protected function getMigrationPaths(){
+    protected function getMigrationPaths() {
         $migrationPaths = [];
 
-        foreach ($this->getSlugsToReset() as $slug) {
-            $migrationPaths[] = $this->getMigrationPath($slug);
+        if ($this->option('location')) {
+            foreach (modules()->repositories() as $repository) {
+                foreach ($this->getSlugsToReset($repository) as $slug) {
+                    $migrationPaths[] = $this->getMigrationPath($slug);
 
-            event($slug.'.module.reset', [$this->module, $this->option()]);
+                    event("$slug.module.reset", [$this->module, $this->option()]);
+                }
+            }
+        } else {
+            foreach ($this->getSlugsToReset(modules()) as $slug) {
+                $migrationPaths[] = $this->getMigrationPath($slug);
+
+                event("$slug.module.reset", [$this->module, $this->option()]);
+            }
         }
 
         return $migrationPaths;
@@ -148,17 +155,17 @@ class ModuleMigrateResetCommand extends BaseModuleCommand
      *
      * @return array
      */
-    protected function getSlugsToReset()
+    protected function getSlugsToReset($repository)
     {
         if ($this->validSlugProvided()) {
-            return [$this->argument("slug")];
+            return [$this->argument('slug')];
         }
 
         if ($this->option("force")) {
-            return $this->module->all()->pluck("slug");
+            return $repository->all()->pluck('slug');
         }
 
-        return $this->module->enabled()->pluck("slug");
+        return $repository->enabled()->pluck('slug');
     }
 
     /**
@@ -216,6 +223,7 @@ class ModuleMigrateResetCommand extends BaseModuleCommand
     /**
      * Get migrations path.
      *
+     * @param $slug
      * @return string
      */
     protected function getMigrationPath($slug)

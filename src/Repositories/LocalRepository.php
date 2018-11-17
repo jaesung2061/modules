@@ -150,7 +150,7 @@ class LocalRepository extends Repository
     {
         $module = $this->modules->where('slug', $slug);
 
-        return $module['enabled'] === true;
+        return $module->get('enabled');
     }
 
     /**
@@ -164,7 +164,7 @@ class LocalRepository extends Repository
     {
         $module = $this->modules->where('slug', $slug);
 
-        return $module['enabled'] === false;
+        return $module->get('enabled');
     }
 
     /**

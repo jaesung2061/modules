@@ -31,7 +31,7 @@ if (!function_exists('module_path')) {
      */
     function module_path($slug = null, $file = '', $location = null)
     {
-        $modulesPath = module_location_config($location);
+        $modulesPath = module_location_config($location, 'path');
         $pathMap = config('modules.pathMap');
 
         if (!empty($file) && !empty($pathMap)) {

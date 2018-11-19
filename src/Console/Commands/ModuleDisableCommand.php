@@ -36,7 +36,7 @@ class ModuleDisableCommand extends BaseModuleCommand
 
             $module = $modules->where('slug', $slug);
 
-            event($slug.'.module.disabled', [$module, null]);
+            event("$slug.module.disabled", [$module, null]);
 
             $this->info('Module was disabled successfully.');
         } else {

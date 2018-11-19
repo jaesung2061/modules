@@ -36,7 +36,7 @@ class ModuleEnableCommand extends BaseModuleCommand
 
             $module = $modules->where('slug', $slug);
 
-            event($slug.'.module.enabled', [$module, null]);
+            event("$slug.module.enabled", [$module, null]);
 
             $this->info('Module was enabled successfully.');
         } else {

@@ -12,7 +12,7 @@ class ModuleListCommand extends BaseModuleCommand
      *
      * @var string
      */
-    protected $signature = 'module:list';
+    protected $signature = 'module:list {--location=}';
 
     /**
      * The console command description.
@@ -35,14 +35,24 @@ class ModuleListCommand extends BaseModuleCommand
      */
     public function handle()
     {
-        foreach (modules()->repositories() as $repository) {
-            $modules = $repository->all();
+        if ($location = $this->option('location')) {
+            $repository = modules($location);
 
-            if (count($modules) == 0) {
+            if ($repository->count() == 0) {
                 $this->error("Your application doesn't have any modules.");
             }
 
             $this->displayModules($this->getModules($repository));
+        } else {
+            foreach (modules()->repositories() as $repository) {
+                $modules = $repository->all();
+
+                if (count($modules) == 0) {
+                    $this->error("Your application doesn't have any modules.");
+                }
+
+                $this->displayModules($this->getModules($repository));
+            }
         }
     }
 

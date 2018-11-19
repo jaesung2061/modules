@@ -54,8 +54,13 @@ class ModuleRepositoriesFactory
 
     protected function getRepositoryClass($location)
     {
-        $driver = $this->getLocationConfig($location)['driver']
-            ?? config('modules.default_driver');
+        $locationConfig = $this->getLocationConfig($location);
+
+        if (is_null($locationConfig)) {
+            throw new \Exception("Location [$location] not configured. Please check your modules.php configuration.");
+        }
+
+        $driver = $locationConfig['driver'] ?? config('modules.default_driver');
 
         return config("modules.drivers.$driver");
     }

@@ -16,7 +16,7 @@ class ModuleMigrateRefreshCommand extends BaseModuleCommand
      *
      * @var string
      */
-    protected $signature = 'module:migrate:refresh {slug?} {--location}';
+    protected $signature = 'module:migrate:refresh {slug?} {--database=} {--location=} {--pretend} {--force} {--seed}';
 
     /**
      * The console command description.
@@ -43,21 +43,23 @@ class ModuleMigrateRefreshCommand extends BaseModuleCommand
             '--database' => $this->option('database'),
             '--force'    => $this->option('force'),
             '--pretend'  => $this->option('pretend'),
+            '--location'  => $this->option('location'),
         ]);
 
         $this->call('module:migrate', [
             'slug'       => $slug,
             '--database' => $this->option('database'),
+            '--location' => $this->option('location'),
         ]);
 
         if ($this->needsSeeding()) {
-            $this->runSeeder($slug, $this->option('database'));
+            $this->runSeeder($slug, $this->option('database'), $this->option('location'));
         }
 
         if (isset($slug)) {
             $module = modules($this->option('location'))->where('slug', $slug);
 
-            event($slug.'.module.refreshed', [$module, $this->option()]);
+            event("$slug.module.refreshed", [$module, $this->option()]);
 
             $this->info('Module has been refreshed.');
         } else {
@@ -78,13 +80,16 @@ class ModuleMigrateRefreshCommand extends BaseModuleCommand
     /**
      * Run the module seeder command.
      *
+     * @param null $slug
      * @param string $database
+     * @param null $location
      */
-    protected function runSeeder($slug = null, $database = null)
+    protected function runSeeder($slug = null, $database = null, $location = null)
     {
         $this->call('module:seed', [
             'slug'       => $slug,
             '--database' => $database,
+            '--location' => $location,
         ]);
     }
 

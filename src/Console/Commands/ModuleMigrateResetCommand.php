@@ -19,7 +19,7 @@ class ModuleMigrateResetCommand extends BaseModuleCommand
      *
      * @var string
      */
-    protected $signature = 'module:migrate:reset {slug?} {--location}';
+    protected $signature = 'module:migrate:reset {slug?} {--location=} {--database=} {--force} {--pretend} {--seed}';
 
     /**
      * The console command description.
@@ -131,20 +131,10 @@ class ModuleMigrateResetCommand extends BaseModuleCommand
     protected function getMigrationPaths() {
         $migrationPaths = [];
 
-        if ($this->option('location')) {
-            foreach (modules()->repositories() as $repository) {
-                foreach ($this->getSlugsToReset($repository) as $slug) {
-                    $migrationPaths[] = $this->getMigrationPath($slug);
+        foreach ($this->getSlugsToReset() as $slug) {
+            $migrationPaths[] = $this->getMigrationPath($slug);
 
-                    event("$slug.module.reset", [$this->module, $this->option()]);
-                }
-            }
-        } else {
-            foreach ($this->getSlugsToReset(modules()) as $slug) {
-                $migrationPaths[] = $this->getMigrationPath($slug);
-
-                event("$slug.module.reset", [$this->module, $this->option()]);
-            }
+            event("$slug.module.reset", [$this->module, $this->option()]);
         }
 
         return $migrationPaths;
@@ -155,17 +145,17 @@ class ModuleMigrateResetCommand extends BaseModuleCommand
      *
      * @return array
      */
-    protected function getSlugsToReset($repository)
+    protected function getSlugsToReset()
     {
         if ($this->validSlugProvided()) {
             return [$this->argument('slug')];
         }
 
         if ($this->option("force")) {
-            return $repository->all()->pluck('slug');
+            return modules($this->option('location'))->all()->pluck('slug');
         }
 
-        return $repository->enabled()->pluck('slug');
+        return modules($this->option('location'))->enabled()->pluck('slug');
     }
 
     /**
@@ -177,15 +167,15 @@ class ModuleMigrateResetCommand extends BaseModuleCommand
      */
     protected function validSlugProvided()
     {
-        if (empty($this->argument("slug"))) {
+        if (empty($this->argument('slug'))) {
             return false;
         }
 
-        if ($this->module->isEnabled($this->argument("slug"))) {
+        if (modules($this->option('location'))->isEnabled($this->argument('slug'))) {
             return true;
         }
 
-        if ($this->option("force")) {
+        if ($this->option('force')) {
             return true;
         }
 

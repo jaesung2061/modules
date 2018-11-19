@@ -54,11 +54,12 @@ class ModuleMigrateCommand extends BaseModuleCommand
         $this->prepareDatabase();
 
         $location = $this->option('location');
+        $repository = modules($location);
 
         if (!empty($this->argument('slug'))) {
-            $module = modules($location)->where('slug', $this->argument('slug'));
+            $module = $repository->where('slug', $this->argument('slug'));
 
-            if (modules($location)->isEnabled($module['slug'])) {
+            if ($repository->isEnabled($module['slug'])) {
                 return $this->migrate($module['slug']);
             } elseif ($this->option('force')) {
                 return $this->migrate($module['slug']);
@@ -67,9 +68,9 @@ class ModuleMigrateCommand extends BaseModuleCommand
             }
         } else {
             if ($this->option('force')) {
-                $modules = modules($location)->all();
+                $modules = $repository->all();
             } else {
-                $modules = modules($location)->enabled();
+                $modules = $repository->enabled();
             }
 
             foreach ($modules as $module) {

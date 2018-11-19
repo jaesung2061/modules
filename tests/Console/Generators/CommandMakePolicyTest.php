@@ -41,11 +41,4 @@ class CommandMakePolicyTest extends BaseTestCase
 
         $this->assertMatchesSnapshot($file);
     }
-
-    public function tearDown()
-    {
-        $this->finder->deleteDirectory(module_path('policy'));
-
-        parent::tearDown();
-    }
 }

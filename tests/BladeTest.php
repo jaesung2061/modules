@@ -43,11 +43,4 @@ class BladeTest extends BaseTestCase
 
         return trim((string)(view($view)->with($parameters)));
     }
-
-    public function tearDown()
-    {
-        $this->finder->deleteDirectory(module_path('blade'));
-
-        parent::tearDown();
-    }
 }

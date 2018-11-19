@@ -32,11 +32,4 @@ class CommandModuleMigrateRefreshTest extends BaseTestCase
 
         $this->assertTrue(\Schema::hasTable('CustomCreateMigrationRefreshTable'));
     }
-
-    public function tearDown()
-    {
-        $this->finder->deleteDirectory(module_path('migrate-refresh'));
-
-        parent::tearDown();
-    }
 }

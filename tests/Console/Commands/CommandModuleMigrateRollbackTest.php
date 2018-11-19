@@ -32,11 +32,4 @@ class CommandModuleMigrateRollbackTest extends BaseTestCase
 
         $this->assertFalse(\Schema::hasTable('CustomCreateMigrationRollbackTable'));
     }
-
-    public function tearDown()
-    {
-        $this->finder->deleteDirectory(module_path('migrate-rollback'));
-
-        parent::tearDown();
-    }
 }

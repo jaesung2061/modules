@@ -32,11 +32,4 @@ class CommandModuleMigrateResetTest extends BaseTestCase
 
         $this->assertFalse(\Schema::hasTable('CustomCreateMigrationResetTable'));
     }
-
-    public function tearDown()
-    {
-        $this->finder->deleteDirectory(module_path('migrate-reset'));
-
-        parent::tearDown();
-    }
 }

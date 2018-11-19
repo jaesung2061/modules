@@ -28,11 +28,4 @@ class CommandModuleMigrateTest extends BaseTestCase
 
         $this->assertTrue(\Schema::hasTable('CustomCreateMigrationTable'));
     }
-
-    public function tearDown()
-    {
-        $this->finder->deleteDirectory(module_path('migrate'));
-
-        parent::tearDown();
-    }
 }

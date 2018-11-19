@@ -71,11 +71,4 @@ class CommandModuleOptimizeTest extends BaseTestCase
             $optimized
         );
     }
-
-    public function tearDown()
-    {
-        $this->finder->deleteDirectory(module_path('optimize'));
-
-        parent::tearDown();
-    }
 }

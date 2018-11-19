@@ -84,11 +84,4 @@ class CommandMakeMigrationTest extends BaseTestCase
 
         $this->assertMatchesSnapshot($migration);
     }
-
-    public function tearDown()
-    {
-        $this->finder->deleteDirectory(module_path('migration'));
-
-        parent::tearDown();
-    }
 }

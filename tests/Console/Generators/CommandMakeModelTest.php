@@ -58,11 +58,4 @@ class CommandMakeModelTest extends BaseTestCase
 
         $this->assertMatchesSnapshot($file);
     }
-
-    public function tearDown()
-    {
-        $this->finder->deleteDirectory(module_path('model'));
-
-        parent::tearDown();
-    }
 }

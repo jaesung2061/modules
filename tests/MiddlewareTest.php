@@ -82,11 +82,4 @@ class MiddlewareTest extends BaseTestCase
             session()->get('module')->toJson()
         );
     }
-
-    public function tearDown()
-    {
-        $this->finder->deleteDirectory(module_path('middleware'));
-
-        parent::tearDown();
-    }
 }

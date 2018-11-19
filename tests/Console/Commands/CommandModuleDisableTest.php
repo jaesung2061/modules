@@ -46,11 +46,4 @@ class CommandModuleDisableTest extends BaseTestCase
 
         $this->assertTrue($cached->toArray()['enabled']);
     }
-
-    public function tearDown()
-    {
-        $this->finder->deleteDirectory(module_path('disable'));
-
-        parent::tearDown();
-    }
 }

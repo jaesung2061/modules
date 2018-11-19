@@ -41,11 +41,4 @@ class CommandMakeProviderTest extends BaseTestCase
 
         $this->assertMatchesSnapshot($file);
     }
-
-    public function tearDown()
-    {
-        $this->finder->deleteDirectory(module_path('provider'));
-
-        parent::tearDown();
-    }
 }

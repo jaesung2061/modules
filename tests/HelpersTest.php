@@ -18,7 +18,7 @@ class HelpersTest extends BaseTestCase
     /** @test */
     public function it_can_get_module_path()
     {
-        $this->assertSame(base_path().'/modules/Helper', module_path('helper'));
+        $this->assertSame(base_path('modules/Helper'), module_path('helper'));
     }
 
     /** @test */
@@ -49,12 +49,5 @@ class HelpersTest extends BaseTestCase
         $this->assertSame('App\Modules\Helper\Http\Middleware', module_class('helper', 'Http\\Middleware'));
 
         $this->assertSame('App\Modules\Helper\Providers', module_class('helper', 'Providers'));
-    }
-
-    public function tearDown()
-    {
-        $this->finder->deleteDirectory(module_path('helper'));
-
-        parent::tearDown();
     }
 }

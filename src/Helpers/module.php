@@ -68,13 +68,13 @@ if (!function_exists('module_class')) {
      *
      * @param string $slug
      * @param string $class
-     *
+     * @param string $location
      * @return string
      * @throws \Caffeinated\Modules\Exceptions\ModuleNotFoundException
      */
-    function module_class($slug, $class)
+    function module_class($slug, $class, $location = null)
     {
-        $module = Module::where('slug', $slug);
+        $module = modules($location)->where('slug', $slug);
 
         if (is_null($module)) {
             throw new ModuleNotFoundException($slug);

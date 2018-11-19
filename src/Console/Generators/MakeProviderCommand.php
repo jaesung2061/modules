@@ -13,7 +13,8 @@ class MakeProviderCommand extends GeneratorCommand
      */
     protected $signature = 'make:module:provider
     	{slug : The slug of the module.}
-    	{name : The name of the service provider class.}';
+    	{name : The name of the service provider class.}
+    	{--location= : The modules location.}';
 
     /**
      * The console command description.

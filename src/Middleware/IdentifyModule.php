@@ -2,38 +2,26 @@
 
 namespace Caffeinated\Modules\Middleware;
 
-use Caffeinated\Modules\ModuleRepositoriesFactory;
-use Caffeinated\Modules\Modules;
 use Closure;
 
 class IdentifyModule
 {
     /**
-     * @var ModuleRepositoriesFactory
-     */
-    protected $module;
-
-    /**
-     * Create a new IdentifyModule instance.
-     *
-     * @param ModuleRepositoriesFactory $module
-     */
-    public function __construct(ModuleRepositoriesFactory $module)
-    {
-        $this->module = $module;
-    }
-
-    /**
      * Handle an incoming request.
      *
      * @param \Illuminate\Http\Request $request
-     * @param \Closure                 $next
+     * @param \Closure $next
+     * @param array $arguments
      *
      * @return mixed
      */
-    public function handle($request, Closure $next, $slug = null)
+    public function handle($request, Closure $next, ...$arguments)
     {
-        $request->session()->flash('module', $this->module->where('slug', $slug));
+        $slug = $arguments[0];
+        $location = $arguments[1] ?? null;
+        $module = modules($location)->where('slug', $slug);
+
+        $request->session()->flash('module', $module);
 
         return $next($request);
     }

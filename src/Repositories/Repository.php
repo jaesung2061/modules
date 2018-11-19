@@ -41,8 +41,13 @@ abstract class Repository implements RepositoryContract
     public function boot()
     {
         $modules = collect();
+        $modulesRoot = $this->getPath();
 
-        foreach (File::directories($this->getPath()) as $moduleDirectory) {
+        if (! realpath($modulesRoot)) {
+            throw new Exception("Directory [$modulesRoot] does not exist. Please create the directory to continue.");
+        }
+
+        foreach (File::directories($modulesRoot) as $moduleDirectory) {
             $manifest = $this->getManifest($moduleDirectory);
 
             // add base namespace to manifest

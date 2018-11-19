@@ -13,7 +13,8 @@ class MakeRequestCommand extends GeneratorCommand
      */
     protected $signature = 'make:module:request
     	{slug : The slug of the module.}
-    	{name : The name of the form request class.}';
+    	{name : The name of the form request class.}
+    	{--location= : The modules location.}';
 
     /**
      * The console command description.

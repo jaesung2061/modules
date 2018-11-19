@@ -13,7 +13,8 @@ class MakeSeederCommand extends GeneratorCommand
      */
     protected $signature = 'make:module:seeder
     	{slug : The slug of the module.}
-    	{name : The name of the seeder class.}';
+    	{name : The name of the seeder class.}
+    	{--location= : The modules location.}';
 
     /**
      * The console command description.

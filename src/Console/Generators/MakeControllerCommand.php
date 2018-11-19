@@ -14,7 +14,8 @@ class MakeControllerCommand extends GeneratorCommand
     protected $signature = 'make:module:controller
     	{slug : The slug of the module}
     	{name : The name of the controller class}
-    	{--resource : Generate a module resource controller class}';
+    	{--resource : Generate a module resource controller class}
+    	{--location= : The modules location}';
 
     /**
      * The console command description.
@@ -65,6 +66,6 @@ class MakeControllerCommand extends GeneratorCommand
      */
     protected function getDefaultNamespace($rootNamespace)
     {
-        return module_class($this->argument('slug'), 'Http\\Controllers');
+        return module_class($this->argument('slug'), 'Http\\Controllers', $this->option('location'));
     }
 }

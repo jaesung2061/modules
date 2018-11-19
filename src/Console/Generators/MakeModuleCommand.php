@@ -17,7 +17,7 @@ class MakeModuleCommand extends BaseModuleCommand
     protected $signature = 'make:module
         {slug : The slug of the module}
         {--Q|quick : Skip the make:module wizard and use default values}
-        {--location=}';
+    	{--location= : The modules location}';
 
     /**
      * The console command description.

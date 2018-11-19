@@ -13,7 +13,8 @@ class MakeTestCommand extends GeneratorCommand
      */
     protected $signature = 'make:module:test
     	{slug : The slug of the module}
-    	{name : The name of the test class}';
+    	{name : The name of the test class}
+    	{--location= : The modules location}';
 
     /**
      * The console command description.

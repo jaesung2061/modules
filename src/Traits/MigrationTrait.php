@@ -8,10 +8,11 @@ trait MigrationTrait
      * Require (once) all migration files for the supplied module.
      *
      * @param string $module
+     * @param string $location
      */
-    protected function requireMigrations($module)
+    protected function requireMigrations($module, $location = null)
     {
-        $path = $this->getMigrationPath($module);
+        $path = $this->getMigrationPath($module, $location);
 
         $migrations = $this->laravel['files']->glob($path.'*_*.php');
 
@@ -24,11 +25,12 @@ trait MigrationTrait
      * Get migration directory path.
      *
      * @param string $module
+     * @param string $location
      *
      * @return string
      */
-    protected function getMigrationPath($module)
+    protected function getMigrationPath($module, $location = null)
     {
-        return module_path($module, 'Database/Migrations');
+        return module_path($module, 'Database/Migrations', $location);
     }
 }

@@ -3,7 +3,6 @@
 namespace Caffeinated\Modules\Console\Commands;
 
 use Caffeinated\Modules\Console\BaseModuleCommand;
-use Caffeinated\Modules\ModuleRepositoriesFactory;
 use Caffeinated\Modules\Traits\MigrationTrait;
 use Illuminate\Console\ConfirmableTrait;
 use Illuminate\Database\Migrations\Migrator;
@@ -19,7 +18,7 @@ class ModuleMigrateRollbackCommand extends BaseModuleCommand
      *
      * @var string
      */
-    protected $name = 'module:migrate:rollback';
+    protected $signature = 'module:migrate:rollback {slug?} {--location=} {--database=} {--force} {--pretend} {--step=}';
 
     /**
      * The console command description.
@@ -36,22 +35,15 @@ class ModuleMigrateRollbackCommand extends BaseModuleCommand
     protected $migrator;
 
     /**
-     * @var Modules
-     */
-    protected $module;
-
-    /**
      * Create a new command instance.
      *
      * @param Migrator $migrator
-     * @param ModuleRepositoriesFactory  $module
      */
-    public function __construct(Migrator $migrator, ModuleRepositoriesFactory $module)
+    public function __construct(Migrator $migrator)
     {
         parent::__construct();
 
         $this->migrator = $migrator;
-        $this->module = $module;
     }
 
     /**
@@ -109,10 +101,10 @@ class ModuleMigrateRollbackCommand extends BaseModuleCommand
         $paths = [];
 
         if ($slug) {
-            $paths[] = module_path($slug, 'Database/Migrations');
+            $paths[] = module_path($slug, 'Database/Migrations', $this->option('location'));
         } else {
-            foreach ($this->module->all() as $module) {
-                $paths[] = module_path($module['slug'], 'Database/Migrations');
+            foreach (modules($this->option('location'))->all() as $module) {
+                $paths[] = module_path($module['slug'], 'Database/Migrations', $this->option('location'));
             }
         }
 

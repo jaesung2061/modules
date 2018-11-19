@@ -2,6 +2,8 @@
 
 namespace Caffeinated\Modules;
 
+use Exception;
+
 class ModuleRepositoriesFactory
 {
     /**
@@ -36,7 +38,7 @@ class ModuleRepositoriesFactory
         $driverClass = $this->getRepositoryClass($location);
 
         if (! $driverClass) {
-            throw new \Exception("[$location] not found. Check your module locations configuration.");
+            throw new Exception("[$location] not found. Check your module locations configuration.");
         }
 
         return $this->repositories[$location] ?? new $driverClass($location);
@@ -57,7 +59,7 @@ class ModuleRepositoriesFactory
         $locationConfig = $this->getLocationConfig($location);
 
         if (is_null($locationConfig)) {
-            throw new \Exception("Location [$location] not configured. Please check your modules.php configuration.");
+            throw new Exception("Location [$location] not configured. Please check your modules.php configuration.");
         }
 
         $driver = $locationConfig['driver'] ?? config('modules.default_driver');

@@ -33,6 +33,11 @@ abstract class Repository implements RepositoryContract
         return config("modules.locations.$this->location.path");
     }
 
+    public function getNamespace()
+    {
+        return rtrim(config("modules.locations.$this->location.namespace"), '/\\');
+    }
+
     public function boot()
     {
         $modules = collect();

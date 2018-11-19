@@ -148,9 +148,9 @@ class LocalRepository extends Repository
      */
     public function isEnabled($slug)
     {
-        $module = $this->modules->where('slug', $slug);
+        $module = $this->modules->where('slug', $slug)->first();
 
-        return $module->get('enabled');
+        return !!$module->get('enabled');
     }
 
     /**
@@ -162,9 +162,9 @@ class LocalRepository extends Repository
      */
     public function isDisabled($slug)
     {
-        $module = $this->modules->where('slug', $slug);
+        $module = $this->modules->where('slug', $slug)->first();
 
-        return $module->get('enabled');
+        return !!$module->get('enabled');
     }
 
     /**

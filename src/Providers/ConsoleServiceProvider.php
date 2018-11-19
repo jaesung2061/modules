@@ -61,7 +61,7 @@ class ConsoleServiceProvider extends ServiceProvider
     protected function registerListCommand()
     {
         $this->app->singleton('command.module.list', function ($app) {
-            return new \Caffeinated\Modules\Console\Commands\ModuleListCommand($app['modules']);
+            return new \Caffeinated\Modules\Console\Commands\ModuleListCommand();
         });
 
         $this->commands('command.module.list');
@@ -73,7 +73,7 @@ class ConsoleServiceProvider extends ServiceProvider
     protected function registerMigrateCommand()
     {
         $this->app->singleton('command.module.migrate', function ($app) {
-            return new \Caffeinated\Modules\Console\Commands\ModuleMigrateCommand($app['migrator'], $app['modules']);
+            return new \Caffeinated\Modules\Console\Commands\ModuleMigrateCommand($app['migrator']);
         });
 
         $this->commands('command.module.migrate');
@@ -114,7 +114,7 @@ class ConsoleServiceProvider extends ServiceProvider
 
             $migrator = new Migrator($table, $repository, $app['db'], $app['files']);
 
-            return new \Caffeinated\Modules\Console\Commands\ModuleMigrateRollbackCommand($migrator, $app['modules']);
+            return new \Caffeinated\Modules\Console\Commands\ModuleMigrateRollbackCommand($migrator);
         });
 
         $this->commands('command.module.migrate.rollback');
@@ -138,7 +138,7 @@ class ConsoleServiceProvider extends ServiceProvider
     protected function registerSeedCommand()
     {
         $this->app->singleton('command.module.seed', function ($app) {
-            return new \Caffeinated\Modules\Console\Commands\ModuleSeedCommand($app['modules']);
+            return new \Caffeinated\Modules\Console\Commands\ModuleSeedCommand();
         });
 
         $this->commands('command.module.seed');

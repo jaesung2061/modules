@@ -27,10 +27,10 @@ class ModuleOptimizeCommand extends BaseModuleCommand
      */
     public function handle()
     {
-        $this->info('Generating optimized module cache');
-
-        $this->laravel['modules']->optimize();
-
-        event('modules.optimized', [$this->laravel['modules']->all()]);
+//        $this->info('Generating optimized module cache');
+//
+//        $this->laravel['modules']->optimize();
+//
+//        event('modules.optimized', [$this->laravel['modules']->all()]);
     }
 }

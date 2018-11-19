@@ -167,6 +167,11 @@ class LocalRepository extends Repository
         return !!$module->get('enabled');
     }
 
+    public function getModulePath($slug)
+    {
+        return config("modules.locations.$this->location.path").'/'.$this->where('slug', $slug)['basename'];
+    }
+
     /**
      * Enables the specified module.
      *

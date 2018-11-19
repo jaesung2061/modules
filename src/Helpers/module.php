@@ -52,7 +52,7 @@ if (!function_exists('module_path')) {
             return $modulesPath . $filePath;
         }
 
-        $module = Module::where('slug', $slug);
+        $module = Module::location($location)->where('slug', $slug);
 
         if (is_null($module)) {
             throw new ModuleNotFoundException($slug);
@@ -74,15 +74,16 @@ if (!function_exists('module_class')) {
      */
     function module_class($slug, $class, $location = null)
     {
+        $location = $location ?: config('modules.default_location');
         $module = modules($location)->where('slug', $slug);
 
         if (is_null($module)) {
             throw new ModuleNotFoundException($slug);
         }
 
-        $namespace = config('modules.namespace') . $module['basename'];
+        $namespace = config("modules.locations.$location.namespace") . $module['basename'];
 
-        return "{$namespace}\\{$class}";
+        return "$namespace\\$class";
     }
 }
 

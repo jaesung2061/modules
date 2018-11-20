@@ -2,13 +2,19 @@
 
 namespace Caffeinated\Modules\Tests;
 
+use File;
 use Orchestra\Testbench\TestCase as OrchestraTestCase;
 
 abstract class BaseTestCase extends OrchestraTestCase
 {
+    public $default = 'modules';
+
     public function setUp()
     {
         parent::setUp();
+
+        // clean up previous files before running each individual test
+        $this->cleanModules();
     }
 
     /**
@@ -39,16 +45,29 @@ abstract class BaseTestCase extends OrchestraTestCase
     protected function getEnvironmentSetUp($app)
     {
         $app['config']->set('database.default', 'sqlite');
-        $app['config']->set('database.connections.sqlite', array(
+        $app['config']->set('database.connections.sqlite', [
             'driver' => 'sqlite',
             'database' => ':memory:',
             'prefix' => '',
-        ));
+        ]);
 
-        $app['config']->set('view.paths', [__DIR__.'/resources/views']);
+        $app['config']->set('view.paths', [__DIR__ . '/resources/views']);
 
-        $app['config']->set('modules.path', base_path('modules'));
-        $app['config']->set('modules.namespace', 'App\\Modules\\');
-        $app['config']->set('modules.driver', 'local');
+        $app['config']->set('modules.locations', [
+            $this->default => [
+                'driver' => 'local',
+                'path' => base_path('modules'),
+                'namespace' => 'Modules\\',
+            ],
+        ]);
+    }
+
+    protected function cleanModules()
+    {
+        foreach (config('modules.locations') as $locationConfig) {
+            foreach (File::directories($locationConfig['path']) as $directory) {
+                File::deleteDirectory($directory);
+            }
+        }
     }
 }

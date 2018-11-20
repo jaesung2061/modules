@@ -196,7 +196,6 @@ class LocalRepository extends Repository
         return $this->set($slug.'::enabled', true);
     }
 
-
     /**
      * Get all module manifest properties and store
      * in the respective container.

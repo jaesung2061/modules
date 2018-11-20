@@ -4,6 +4,7 @@ namespace Caffeinated\Modules\Repositories;
 
 use Exception;
 use Caffeinated\Modules\Contracts\Repository as RepositoryContract;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
 
 abstract class Repository implements RepositoryContract
@@ -17,6 +18,8 @@ abstract class Repository implements RepositoryContract
      * @var \Illuminate\Support\Collection
      */
     protected $modules;
+
+    protected $booted = false;
 
     /**
      * Constructor method.
@@ -40,48 +43,29 @@ abstract class Repository implements RepositoryContract
 
     public function boot()
     {
-        $modules = collect();
-        $modulesRoot = $this->getPath();
+        $modules = $this->parseManifests();
 
-        if (! realpath($modulesRoot)) {
-            throw new Exception("Directory [$modulesRoot] does not exist. Please create the directory to continue.");
+        $this->registerModules($modules);
+
+        $this->modules = $modules;
+
+        if (!$this->booted) {
+            // register event listeners
+            Event::listen('*.module.made', function ($slug) {
+                $this->boot();
+            });
         }
 
-        foreach (File::directories($modulesRoot) as $moduleDirectory) {
-            $manifest = $this->getManifest($moduleDirectory);
+        $this->booted = true;
+    }
 
-            // add base namespace to manifest
-            $manifest['id'] = crc32($manifest->get('slug'));
-            $manifest['basename'] = $basename = $this->getModuleNamespace($moduleDirectory);
-            $manifest['order'] = $manifest['order'] ?? 9999;
-            $manifest['enabled'] = $manifest['enabled'] ?? config('modules.enabled');
+    public function reboot()
+    {
+        $modules = $this->parseManifests();
 
-            $modules->put($manifest['slug'], $manifest);
-        };
+        $this->registerModules($modules);
 
-        $this->modules = $modules->sort(function ($a, $b) {
-            $a = $a['order'];
-            $b = $b['order'];
-
-            if ($a == $b) {
-                return 0;
-            }
-
-            return ($a < $b) ? -1 : 1;
-        });
-
-        foreach ($this->all() as $module) {
-            $this->registerServiceProvider($module);
-
-            foreach ($module['autoload'] ?? [] as $file) {
-                $basePath = config("modules.locations.$this->location.path");
-                $filePath = "$basePath/$basename/$file";
-
-                if (File::exists($filePath)) {
-                    require $filePath;
-                }
-            }
-        }
+        $this->modules = $modules;
     }
 
     public function getManifest($moduleDirectory)
@@ -93,6 +77,73 @@ abstract class Repository implements RepositoryContract
         }
 
         throw new Exception("Your JSON manifest file in was not properly formatted. [$moduleDirectory]");
+    }
+
+    /**
+     * @param $moduleDirectory
+     * @return string
+     */
+    protected function getModuleNamespace($moduleDirectory)
+    {
+        return trim(array_last(explode(DIRECTORY_SEPARATOR, $moduleDirectory)), '\\');
+    }
+
+    /**
+     * @return \Illuminate\Support\Collection
+     * @throws \Exception
+     */
+    protected function parseManifests()
+    {
+        $modules = collect();
+        $modulesRoot = $this->getPath();
+
+        if (! realpath($modulesRoot)) {
+            File::makeDirectory($modulesRoot);
+        }
+
+        foreach (File::directories($modulesRoot) as $moduleDirectory) {
+            $manifest = $this->getManifest($moduleDirectory);
+
+            // add base namespace to manifest
+            $manifest['id'] = crc32($manifest->get('slug'));
+            $manifest['path'] = $moduleDirectory;
+            $manifest['basename'] = $this->getModuleNamespace($moduleDirectory);
+            $manifest['order'] = $manifest['order'] ?? 9999;
+            $manifest['enabled'] = $manifest['enabled'] ?? config('modules.enabled');
+
+            $modules->put($manifest['slug'], $manifest);
+        };
+
+        return $modules->sort(function ($a, $b) {
+            $a = $a['order'];
+            $b = $b['order'];
+
+            if ($a == $b) {
+                return 0;
+            }
+
+            return ($a < $b) ? -1 : 1;
+        });
+    }
+
+    /**
+     * @param $modules
+     */
+    protected function registerModules($modules)
+    {
+        foreach ($modules as $module) {
+            $this->registerServiceProvider($module);
+
+            foreach ($module['autoload'] ?? [] as $file) {
+                $basePath = config("modules.locations.$this->location.path");
+                $basename = $this->getModuleNamespace($module['path']);
+                $filePath = "$basePath/$basename/$file";
+
+//                if (File::exists($filePath)) {
+                    require $filePath;
+//                }
+            }
+        }
     }
 
     /**
@@ -109,14 +160,5 @@ abstract class Repository implements RepositoryContract
         if (class_exists($serviceProvider)) {
             app()->register($serviceProvider);
         }
-    }
-
-    /**
-     * @param $moduleDirectory
-     * @return string
-     */
-    protected function getModuleNamespace($moduleDirectory)
-    {
-        return trim(array_last(explode(DIRECTORY_SEPARATOR, $moduleDirectory)), '\\');
     }
 }

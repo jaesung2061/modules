@@ -4,8 +4,10 @@ namespace Caffeinated\Modules\Console\Generators;
 
 use Caffeinated\Modules\Console\BaseModuleCommand;
 use Caffeinated\Modules\ModuleRepositoriesFactory;
+use Exception;
 use Illuminate\Filesystem\Filesystem;
 use Symfony\Component\Console\Helper\ProgressBar;
+use Symfony\Component\Console\Input\InputOption;
 
 class MakeModuleCommand extends BaseModuleCommand
 {
@@ -119,7 +121,10 @@ class MakeModuleCommand extends BaseModuleCommand
 
         $progress->finish();
 
-        event($this->container['slug'] . '.module.made');
+        event($this->container['slug'] . '.module.made', [
+            $this->option('location'),
+            $this->getOptions()
+        ]);
 
         $this->info("\nModule generated successfully.");
     }
@@ -180,13 +185,19 @@ class MakeModuleCommand extends BaseModuleCommand
      */
     protected function generateModule()
     {
-        if (!$this->files->isDirectory(module_path())) {
-            $this->files->makeDirectory(module_path());
+        $modulesDirectory = module_path(null, '', $this->option('location'));
+
+        if (!$this->files->isDirectory($modulesDirectory)) {
+            $this->files->makeDirectory($modulesDirectory);
         }
 
         $pathMap = config('modules.pathMap');
-        $directory = module_path(null, $this->container['basename']);
+        $directory = module_path(null, $this->container['basename'], $this->option('location'));
         $source = __DIR__ . '/../../../resources/stubs/module';
+
+        if ($this->files->isDirectory($directory)) {
+            throw new Exception("Directory already exists at [$directory]");
+        }
 
         $this->files->makeDirectory($directory);
 

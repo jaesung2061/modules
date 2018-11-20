@@ -54,8 +54,10 @@ class MakeMigrationCommand extends BaseModuleCommand
         });
 
         unset($arguments['slug']);
+        unset($option['location']);
 
-        $options['--path'] = str_replace(realpath(base_path()), '', realpath(module_path($this->argument('slug'), 'Database/Migrations', $this->option('location'))));
+        $modulePath = module_path($this->argument('slug'), 'Database/Migrations', $this->option('location'));
+        $options['--path'] = str_replace(realpath(base_path()), '', realpath($modulePath));
         $options['--path'] = ltrim($options['--path'], '/');
 
         return $this->call('make:migration', array_merge($arguments, $options));

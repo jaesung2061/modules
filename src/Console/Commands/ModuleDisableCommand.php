@@ -3,6 +3,7 @@
 namespace Caffeinated\Modules\Console\Commands;
 
 use Caffeinated\Modules\Console\BaseModuleCommand;
+use Illuminate\Support\Facades\Event;
 use Symfony\Component\Console\Input\InputArgument;
 
 class ModuleDisableCommand extends BaseModuleCommand
@@ -36,7 +37,10 @@ class ModuleDisableCommand extends BaseModuleCommand
 
             $module = $modules->where('slug', $slug);
 
-            event("$slug.module.disabled", [$module, null]);
+            event("$slug.module.disabled", [
+                $module,
+                null
+            ]);
 
             $this->info('Module was disabled successfully.');
         } else {

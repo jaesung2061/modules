@@ -6,18 +6,16 @@ use Exception;
 use Caffeinated\Modules\Contracts\Repository as RepositoryContract;
 use Illuminate\Config\Repository as Config;
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Facades\File;
 
-abstract class AbstractRepository implements RepositoryContract
+abstract class Repository implements RepositoryContract
 {
     /**
-     * @var \Illuminate\Config\Repository
+     * Location config handle
+     *
+     * @var string
      */
-    protected $config;
-
-    /**
-     * @var \Illuminate\Filesystem\Filesystem
-     */
-    protected $files;
+    public $location;
 
     /**
      * @var string Path to the defined modules directory
@@ -26,27 +24,24 @@ abstract class AbstractRepository implements RepositoryContract
 
     /**
      * Constructor method.
-     *
-     * @param \Illuminate\Config\Repository     $config
-     * @param \Illuminate\Filesystem\Filesystem $files
+     * @param string $location
      */
-    public function __construct(Config $config, Filesystem $files)
+    public function __construct(string $location)
     {
-        $this->config = $config;
-        $this->files = $files;
+        $this->location = $location;
     }
 
     /**
      * Get all module basenames.
      *
-     * @return array
+     * @return \Illuminate\Support\Collection
      */
     protected function getAllBasenames()
     {
         $path = $this->getPath();
 
         try {
-            $collection = collect($this->files->directories($path));
+            $collection = collect(File::directories($path));
 
             $basenames = $collection->map(function ($item, $key) {
                 return basename($item);
@@ -63,13 +58,13 @@ abstract class AbstractRepository implements RepositoryContract
      *
      * @param string $slug
      *
-     * @return Collection|null
+     * @return \Illuminate\Support\Collection|null
      */
     public function getManifest($slug)
     {
         if (! is_null($slug)) {
             $path     = $this->getManifestPath($slug);
-            $contents = $this->files->get($path);
+            $contents = File::get($path);
             $validate = @json_decode($contents, true);
 
             if (json_last_error() === JSON_ERROR_NONE) {
@@ -89,7 +84,7 @@ abstract class AbstractRepository implements RepositoryContract
      */
     public function getPath()
     {
-        return $this->path ?: $this->config->get('modules.path');
+        return $this->path ?: config("modules.locations.$this->location.path");
     }
 
     /**
@@ -143,6 +138,6 @@ abstract class AbstractRepository implements RepositoryContract
      */
     public function getNamespace()
     {
-        return rtrim($this->config->get('modules.namespace'), '/\\');
+        return rtrim(config("modules.locations.$this->location.namespace"), '/\\');
     }
 }

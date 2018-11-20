@@ -13,29 +13,37 @@ class ModuleRepositoriesFactory
 
     public function location($location = null)
     {
-        return $this->getModuleRepository($location);
+        return $this->repository($location);
     }
 
     public function boot()
     {
         foreach (array_keys(config('modules.locations')) as $location) {
-            $repository = $this->getModuleRepository($location);
+            $repository = $this->repository($location);
 
-            $repository->boot();
+            $repository->optimize();
 
             $this->repositories[$location] = $repository;
         }
     }
 
+    /**
+     * @return \Caffeinated\Modules\Contracts\Repository[]
+     */
     public function repositories()
     {
         return $this->repositories;
     }
 
-    protected function getModuleRepository($location = null)
+    /**
+     * @param string $location
+     * @return \Caffeinated\Modules\Contracts\Repository
+     * @throws \Exception
+     */
+    protected function repository($location = null)
     {
-        $location = $location ?: $this->getDefaultLocation();
-        $driverClass = $this->getRepositoryClass($location);
+        $location = $location ?: $this->defaultLocation();
+        $driverClass = $this->repositoryClass($location);
 
         if (! $driverClass) {
             throw new Exception("[$location] not found. Check your module locations configuration.");
@@ -44,19 +52,31 @@ class ModuleRepositoriesFactory
         return $this->repositories[$location] ?? new $driverClass($location);
     }
 
-    protected function getDefaultLocation()
+    /**
+     * @return \Illuminate\Config\Repository|mixed
+     */
+    protected function defaultLocation()
     {
         return config('modules.default_location');
     }
 
-    protected function getLocationConfig($location)
+    /**
+     * @param $location
+     * @return \Illuminate\Config\Repository|mixed
+     */
+    protected function locationConfig($location)
     {
         return config("modules.locations.$location");
     }
 
-    protected function getRepositoryClass($location)
+    /**
+     * @param $location
+     * @return \Illuminate\Config\Repository|mixed
+     * @throws \Exception
+     */
+    protected function repositoryClass($location)
     {
-        $locationConfig = $this->getLocationConfig($location);
+        $locationConfig = $this->locationConfig($location);
 
         if (is_null($locationConfig)) {
             throw new Exception("Location [$location] not configured. Please check your modules.php configuration.");
@@ -67,8 +87,14 @@ class ModuleRepositoriesFactory
         return config("modules.drivers.$driver");
     }
 
+    /**
+     * @param $method
+     * @param $arguments
+     * @return mixed
+     * @throws \Exception
+     */
     public function __call($method, $arguments)
     {
-        return call_user_func_array([$this->getModuleRepository(), $method], $arguments);
+        return call_user_func_array([$this->repository(), $method], $arguments);
     }
 }

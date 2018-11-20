@@ -2,39 +2,50 @@
 
 namespace Caffeinated\Modules\Repositories;
 
-class LocalAbstractRepository extends AbstractRepository
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\File;
+
+class LocalRepository extends Repository
 {
+    protected $modules;
+
     /**
      * Get all modules.
      *
-     * @return \Illuminate\Support\Collection|array
+     * @return Collection
      */
     public function all()
     {
-        return $this->modules;
+        return $this->getCache()->sortBy('order');
     }
 
     /**
      * Get all module slugs.
      *
-     * @return \Illuminate\Support\Collection|array
+     * @return Collection
      */
     public function slugs()
     {
-        return $this->modules->pluck('slug');
+        $slugs = collect();
+
+        $this->all()->each(function ($item, $key) use ($slugs) {
+            $slugs->push(strtolower($item['slug']));
+        });
+
+        return $slugs;
     }
 
     /**
      * Get modules based on where clause.
      *
      * @param string $key
-     * @param mixed $value
+     * @param mixed  $value
      *
-     * @return \Illuminate\Support\Collection|array
+     * @return Collection
      */
     public function where($key, $value)
     {
-        return $this->modules->where($key, $value)->first();
+        return collect($this->all()->where($key, $value)->first());
     }
 
     /**
@@ -42,11 +53,13 @@ class LocalAbstractRepository extends AbstractRepository
      *
      * @param string $key
      *
-     * @return \Illuminate\Support\Collection|array
+     * @return Collection
      */
     public function sortBy($key)
     {
-        return $this->modules->sortBy($key);
+        $collection = $this->all();
+
+        return $collection->sortBy($key);
     }
 
     /**
@@ -54,11 +67,13 @@ class LocalAbstractRepository extends AbstractRepository
      *
      * @param string $key
      *
-     * @return \Illuminate\Support\Collection|array
+     * @return Collection
      */
     public function sortByDesc($key)
     {
-        return $this->modules->sortBy($key, 'desc');
+        $collection = $this->all();
+
+        return $collection->sortByDesc($key);
     }
 
     /**
@@ -70,39 +85,41 @@ class LocalAbstractRepository extends AbstractRepository
      */
     public function exists($slug)
     {
-        return $this->slugs()->contains($slug) || $this->slugs()->contains(str_slug($slug));
+        return ($this->slugs()->contains($slug) || $this->slugs()->contains(str_slug($slug)));
     }
 
     /**
-     * Returns a count of all modules.
+     * Returns count of all modules.
      *
      * @return int
      */
     public function count()
     {
-        return $this->modules->count();
+        return $this->all()->count();
     }
 
     /**
-     * Returns the given module property.
+     * Get a module property value.
      *
      * @param string $property
-     * @param mixed|null $default
+     * @param mixed  $default
      *
-     * @return mixed|null
+     * @return mixed
      */
     public function get($property, $default = null)
     {
         list($slug, $key) = explode('::', $property);
 
-        return $this->modules->where('slug', $slug)->first()->get($key, $default);
+        $module = $this->where('slug', $slug);
+
+        return $module->get($key, $default);
     }
 
     /**
      * Set the given module property value.
      *
      * @param string $property
-     * @param mixed $value
+     * @param mixed  $value
      *
      * @return bool
      */
@@ -110,37 +127,46 @@ class LocalAbstractRepository extends AbstractRepository
     {
         list($slug, $key) = explode('::', $property);
 
-        $module = $this->modules->where('slug', $slug);
+        $cachePath = $this->getCachePath();
+        $cache = $this->getCache();
+        $module = $this->where('slug', $slug);
 
         if (isset($module[$key])) {
             unset($module[$key]);
         }
 
         $module[$key] = $value;
+
+        $module = collect([$module['basename'] => $module]);
+
+        $merged = $cache->merge($module);
+        $content = json_encode($merged->all(), JSON_PRETTY_PRINT);
+
+        return File::put($cachePath, $content);
     }
 
     /**
      * Get all enabled modules.
      *
-     * @return \Illuminate\Support\Collection|array
+     * @return Collection
      */
     public function enabled()
     {
-        return $this->modules->where('enabled', true);
+        return $this->all()->where('enabled', true);
     }
 
     /**
      * Get all disabled modules.
      *
-     * @return \Illuminate\Support\Collection|array
+     * @return Collection
      */
     public function disabled()
     {
-        return $this->modules->where('enabled', false);
+        return $this->all()->where('enabled', false);
     }
 
     /**
-     * Determines if the specified module is enabled.
+     * Check if specified module is enabled.
      *
      * @param string $slug
      *
@@ -148,13 +174,13 @@ class LocalAbstractRepository extends AbstractRepository
      */
     public function isEnabled($slug)
     {
-        $module = $this->modules->where('slug', $slug)->first();
+        $module = $this->where('slug', $slug);
 
-        return !!$module->get('enabled');
+        return $module['enabled'] === true;
     }
 
     /**
-     * Determines if the specified module is disabled.
+     * Check if specified module is disabled.
      *
      * @param string $slug
      *
@@ -162,14 +188,9 @@ class LocalAbstractRepository extends AbstractRepository
      */
     public function isDisabled($slug)
     {
-        $module = $this->modules->where('slug', $slug)->first();
+        $module = $this->where('slug', $slug);
 
-        return !!$module->get('enabled');
-    }
-
-    public function getModulePath($slug)
-    {
-        return config("modules.locations.$this->location.path").'/'.$this->where('slug', $slug)['basename'];
+        return $module['enabled'] === false;
     }
 
     /**
@@ -193,42 +214,107 @@ class LocalAbstractRepository extends AbstractRepository
      */
     public function disable($slug)
     {
-        return $this->set($slug.'::enabled', true);
+        return $this->set($slug.'::enabled', false);
     }
 
-    /**
-     * @throws \Exception
-     */
-    public function boot()
-    {
-        // todo check to see if there is a mdo
-
-
-
-
-//        $modules = $this->parseManifests();
-//
-//        $this->registerModules($modules);
-//
-//        $this->modules = $modules;
-//
-//        if (!$this->booted) {
-//            Event::listen('module.made', function ($slug, $location) {
-//                $this->reboot();
-//            });
-//        }
-//
-//        $this->booted = true;
-    }
+    /*
+    |--------------------------------------------------------------------------
+    | Optimization Methods
+    |--------------------------------------------------------------------------
+    |
+    */
 
     /**
-     * Get all module manifest properties and store
-     * in the respective container.
+     * Update cached repository of module information.
      *
      * @return bool
      */
     public function optimize()
     {
-        //
+        $cache = $this->getCache();
+        $basenames = $this->getAllBasenames();
+        $modules = collect();
+
+        $basenames->each(function ($module, $key) use ($modules, $cache) {
+            $basename = collect(['basename' => $module]);
+            $temp = $basename->merge(collect($cache->get($module)));
+            $manifest = $temp->merge(collect($this->getManifest($module)));
+
+            $modules->put($module, $manifest);
+        });
+
+//        $modules = $modules->sort(function ($a, $b) {
+//            $a = $a['order'];
+//            $b = $b['order'];
+//            if ($a == $b) {
+//                return 0;
+//            }
+//            return ($a < $b) ? -1 : 1;
+//        });
+
+        $modules->each(function (Collection $module) {
+            $module->put('id', crc32($module->get('slug')));
+
+            if (!$module->has('enabled')) {
+                $module->put('enabled', config("modules.locations.$this->location.enabled_by_default", true));
+            }
+
+            if (!$module->has('order')) {
+                $module->put('order', 9001);
+            }
+
+            return $module;
+        });
+
+        $content = json_encode($modules->all(), JSON_PRETTY_PRINT);
+
+        return File::put($this->getCachePath(), $content);
+    }
+
+    /**
+     * Get the contents of the cache file.
+     *
+     * @return Collection
+     */
+    private function getCache()
+    {
+        if ($this->modules) {
+            return $this->modules;
+        }
+
+        $cachePath = $this->getCachePath();
+
+        if (!File::exists($cachePath)) {
+            $this->createCache();
+
+            $this->optimize();
+        }
+
+        return collect(json_decode(File::get($cachePath), true));
+    }
+
+    /**
+     * Create an empty instance of the cache file.
+     *
+     * @return Collection
+     */
+    private function createCache()
+    {
+        $cachePath = $this->getCachePath();
+        $content = json_encode([], JSON_PRETTY_PRINT);
+
+        File::put($cachePath, $content);
+
+        return collect(json_decode($content, true));
+    }
+
+    /**
+     * Get the path to the cache file.
+     *
+     * @return string
+     */
+    private function getCachePath()
+    {
+        return storage_path('app/modules.json');
     }
 }

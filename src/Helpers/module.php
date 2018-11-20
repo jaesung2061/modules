@@ -7,7 +7,7 @@ if (!function_exists('modules')) {
      * Get modules repository.
      *
      * @param string $location
-     * @return mixed
+     * @return \Caffeinated\Modules\ModuleRepositoriesFactory|\Caffeinated\Modules\Contracts\Repository
      */
     function modules($location = null) {
         if ($location) {

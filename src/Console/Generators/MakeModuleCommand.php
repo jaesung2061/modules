@@ -103,28 +103,9 @@ class MakeModuleCommand extends BaseModuleCommand
      */
     protected function generate()
     {
-        $steps = [
-            'Generating module...' => 'generateModule',
-            'Optimizing module cache...' => 'optimizeModules',
-        ];
+        $this->generateModule();
 
-        $progress = new ProgressBar($this->output, count($steps));
-        $progress->start();
-
-        foreach ($steps as $message => $function) {
-            $progress->setMessage($message);
-
-            $this->$function();
-
-            $progress->advance();
-        }
-
-        $progress->finish();
-
-        event($this->container['slug'] . '.module.made', [
-            $this->option('location'),
-            $this->getOptions()
-        ]);
+        event('module.made', [$this->container['slug'], $this->option('location')]);
 
         $this->info("\nModule generated successfully.");
     }
@@ -248,13 +229,5 @@ class MakeModuleCommand extends BaseModuleCommand
         ];
 
         return str_replace($find, $replace, $contents);
-    }
-
-    /**
-     * Reset module cache of enabled and disabled modules.
-     */
-    protected function optimizeModules()
-    {
-        return $this->callSilent('module:optimize');
     }
 }

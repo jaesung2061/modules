@@ -59,7 +59,7 @@ class ModuleMigrateRefreshCommand extends BaseModuleCommand
         if (isset($slug)) {
             $module = modules($this->option('location'))->where('slug', $slug);
 
-            event("$slug.module.refreshed", [$module, $this->option()]);
+            event('module.refreshed', [$module['slug'], $this->option('location')]);
 
             $this->info('Module has been refreshed.');
         } else {

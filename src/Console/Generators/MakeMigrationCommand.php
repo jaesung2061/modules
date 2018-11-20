@@ -54,7 +54,7 @@ class MakeMigrationCommand extends BaseModuleCommand
         });
 
         unset($arguments['slug']);
-        unset($option['location']);
+        unset($options['--location']);
 
         $modulePath = module_path($this->argument('slug'), 'Database/Migrations', $this->option('location'));
         $options['--path'] = str_replace(realpath(base_path()), '', realpath($modulePath));

@@ -90,7 +90,7 @@ class ModuleSeedCommand extends BaseModuleCommand
 
             $this->call('db:seed', $params);
 
-            event("$slug.module.seeded", [$module, $this->option()]);
+            event('module.seeded', [$module['slug'], $this->option('location')]);
         }
     }
 

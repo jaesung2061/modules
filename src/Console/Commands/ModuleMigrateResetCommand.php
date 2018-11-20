@@ -134,7 +134,7 @@ class ModuleMigrateResetCommand extends BaseModuleCommand
         foreach ($this->getSlugsToReset() as $slug) {
             $migrationPaths[] = $this->getMigrationPath($slug);
 
-            event("$slug.module.reset", [$this->module, $this->option()]);
+            event('module.reset', [$slug, $this->option('location')]);
         }
 
         return $migrationPaths;

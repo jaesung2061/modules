@@ -98,7 +98,7 @@ class ModuleMigrateCommand extends BaseModuleCommand
 
             $this->migrator->setOutput($this->output)->run($path, ['pretend' => $pretend, 'step' => $step]);
 
-            event($slug.'.module.migrated', [$module, $this->option()]);
+            event('module.migrated', [$module['slug'], $this->option('location')]);
 
             // Finally, if the "seed" option has been given, we will re-run the database
             // seed task to re-populate the database, which is convenient when adding

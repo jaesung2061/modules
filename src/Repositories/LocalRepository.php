@@ -2,6 +2,8 @@
 
 namespace Caffeinated\Modules\Repositories;
 
+use Illuminate\Support\Facades\File;
+
 class LocalRepository extends Repository
 {
     /**
@@ -137,7 +139,7 @@ class LocalRepository extends Repository
         $merged = $cache->merge($module);
         $content = json_encode($merged->all(), JSON_PRETTY_PRINT);
 
-        return $this->files->put($cachePath, $content);
+        return File::put($cachePath, $content);
     }
 
     /**
@@ -244,7 +246,7 @@ class LocalRepository extends Repository
             $module->put('id', crc32($module->get('slug')));
 
             if (!$module->has('enabled')) {
-                $module->put('enabled', config('modules.enabled', true));
+                $module->put('enabled', config("modules.locations.$this->location.enabled", true));
             }
 
             if (!$module->has('order')) {
@@ -256,7 +258,7 @@ class LocalRepository extends Repository
 
         $content = json_encode($modules->all(), JSON_PRETTY_PRINT);
 
-        return $this->files->put($cachePath, $content);
+        return File::put($cachePath, $content);
     }
 
     /**
@@ -268,13 +270,13 @@ class LocalRepository extends Repository
     {
         $cachePath = $this->getCachePath();
 
-        if (!$this->files->exists($cachePath)) {
+        if (!File::exists($cachePath)) {
             $this->createCache();
 
             $this->optimize();
         }
 
-        return collect(json_decode($this->files->get($cachePath), true));
+        return collect(json_decode(File::get($cachePath), true));
     }
 
     /**
@@ -287,7 +289,7 @@ class LocalRepository extends Repository
         $cachePath = $this->getCachePath();
         $content = json_encode([], JSON_PRETTY_PRINT);
 
-        $this->files->put($cachePath, $content);
+        File::put($cachePath, $content);
 
         return collect(json_decode($content, true));
     }

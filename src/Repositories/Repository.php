@@ -10,9 +10,9 @@ use Illuminate\Filesystem\Filesystem;
 abstract class Repository implements RepositoryContract
 {
     /**
-     * @var \Illuminate\Config\Repository
+     * @var string
      */
-    protected $config;
+    public $location;
 
     /**
      * @var \Illuminate\Filesystem\Filesystem
@@ -25,18 +25,6 @@ abstract class Repository implements RepositoryContract
     protected $path;
 
     /**
-     * Constructor method.
-     *
-     * @param \Illuminate\Config\Repository     $config
-     * @param \Illuminate\Filesystem\Filesystem $files
-     */
-    public function __construct(Config $config, Filesystem $files)
-    {
-        $this->config = $config;
-        $this->files = $files;
-    }
-
-    /**
      * Get all module basenames.
      *
      * @return array
@@ -46,7 +34,7 @@ abstract class Repository implements RepositoryContract
         $path = $this->getPath();
 
         try {
-            $collection = collect($this->files->directories($path));
+            $collection = collect(File::directories($path));
 
             $basenames = $collection->map(function ($item, $key) {
                 return basename($item);
@@ -69,7 +57,7 @@ abstract class Repository implements RepositoryContract
     {
         if (! is_null($slug)) {
             $path     = $this->getManifestPath($slug);
-            $contents = $this->files->get($path);
+            $contents = File::get($path);
             $validate = @json_decode($contents, true);
 
             if (json_last_error() === JSON_ERROR_NONE) {
@@ -89,7 +77,7 @@ abstract class Repository implements RepositoryContract
      */
     public function getPath()
     {
-        return $this->path ?: $this->config->get('modules.path');
+        return $this->path ?: config('modules.path');
     }
 
     /**
@@ -143,6 +131,6 @@ abstract class Repository implements RepositoryContract
      */
     public function getNamespace()
     {
-        return rtrim($this->config->get('modules.namespace'), '/\\');
+        return rtrim(config('modules.namespace'), '/\\');
     }
 }

@@ -2,84 +2,58 @@
 
 return [
 
-    /*
-    |--------------------------------------------------------------------------
-    | Path to Modules
-    |--------------------------------------------------------------------------
-    |
-    | Define the path where you'd like to store your modules. Note that if you
-    | choose a path that's outside of your public directory, you will need to
-    | copy your module assets (CSS, images, etc.) to your public directory.
-    |
-    */
+    'default_location' => 'modules',
 
-    'path' => app_path('Modules'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Modules Default State
-    |--------------------------------------------------------------------------
-    |
-    | When a previously unknown module is added, if it doesn't have an 'enabled'
-    | state set then this is the value which it will default to. If this is
-    | not provided then the module will default to being 'enabled'.
-    |
-    */
-
-    'enabled' => true,
-
-    /*
-    |--------------------------------------------------------------------------
-    | Modules Base Namespace
-    |--------------------------------------------------------------------------
-    |
-    | Define the base namespace for your modules. Be sure to update this value
-    | if you move your modules directory to a new path. This is primarily used
-    | by the module:make Artisan command.
-    |
-    */
-
-    'namespace' => 'App\Modules\\',
+    'locations' => [
+        'modules' => [
+            'driver' => 'local',
+            'path' => app_path('Modules'),
+            'namespace' => 'Modules\\',
+            'enabled_by_default' => true,
+        ],
+    ],
 
     /*
     |--------------------------------------------------------------------------
     | Modules Default Service Provider class name
     |--------------------------------------------------------------------------
     |
-    | Define class name to use as default module service provider.
+    | Define class name to use as default module service provider for locations
+    | if that location does not have a custom provider class.
     |
     */
 
-    'provider_class' => 'Providers\\ModuleServiceProvider',
+    'default_provider_class' => 'Providers\\ModuleServiceProvider',
 
     /*
     |--------------------------------------------------------------------------
     | Default Module Driver
     |--------------------------------------------------------------------------
     |
-    | This option controls the module storage driver that will be utilized.
-    | This driver manages the retrieval and management of module properties.
-    | Setting this to custom allows you to specify your own driver instance.
-    |
-    | Supported: "local" or "custom"
+    | By default, the local storage driver will be used. If you wish to use
+    | a custom driver, create a class and define it in the 'drivers' section
+    | below.
     |
     */
 
-    'driver' => 'local',
+    'default_driver' => 'local',
 
     /*
      |--------------------------------------------------------------------------
-     | Custom Module Driver
+     | Custom Module Drivers
      |--------------------------------------------------------------------------
      |
-     | Using a custom module driver, the 'driver' value need to be set to 'custom'
+     | Using custom module drivers, the 'driver' value need to be set to 'custom'
      | The path to the driver need to be set in addition at custom_driver.
      |
      | @warn: This value will be only considered if driver is set to custom.
      |
      */
 
-    // 'custom_driver' => 'Caffeinated\Modules\Repositories\LocalRepository',
+    'drivers' => [
+        'local' => 'Caffeinated\Modules\Repositories\LocalRepository',
+        //'mysql' => 'Custom\MysqlRepository',
+    ],
 
     /*
     |--------------------------------------------------------------------------

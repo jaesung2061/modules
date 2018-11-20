@@ -2,10 +2,10 @@
 
 namespace Caffeinated\Modules\Console\Generators;
 
-use Caffeinated\Modules\Modules;
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
-use Symfony\Component\Console\Helper\ProgressBar;
+use Symfony\Component\Console\Input\InputOption;
 
 class MakeModuleCommand extends Command
 {
@@ -16,7 +16,8 @@ class MakeModuleCommand extends Command
      */
     protected $signature = 'make:module
         {slug : The slug of the module}
-        {--Q|quick : Skip the make:module wizard and use default values}';
+        {--Q|quick : Skip the make:module wizard and use default values}
+    	{--location= : The modules location}';
 
     /**
      * The console command description.
@@ -24,13 +25,6 @@ class MakeModuleCommand extends Command
      * @var string
      */
     protected $description = 'Create a new Caffeinated module and bootstrap it';
-
-    /**
-     * The modules instance.
-     *
-     * @var Modules
-     */
-    protected $module;
 
     /**
      * The filesystem instance.
@@ -50,14 +44,12 @@ class MakeModuleCommand extends Command
      * Create a new command instance.
      *
      * @param Filesystem $files
-     * @param Modules $module
      */
-    public function __construct(Filesystem $files, Modules $module)
+    public function __construct(Filesystem $files)
     {
         parent::__construct();
 
         $this->files = $files;
-        $this->module = $module;
     }
 
     /**
@@ -85,8 +77,9 @@ class MakeModuleCommand extends Command
         $this->container['description'] = 'This is the description for the ' . $this->container['name'] . ' module.';
 
         if ($this->option('quick')) {
+            $location = $this->option('location');
             $this->container['basename'] = studly_case($this->container['slug']);
-            $this->container['namespace'] = config('modules.namespace') . $this->container['basename'];
+            $this->container['namespace'] = config("modules.locations.$location.namespace") . $this->container['basename'];
             return $this->generate();
         }
 
@@ -100,25 +93,9 @@ class MakeModuleCommand extends Command
      */
     protected function generate()
     {
-        $steps = [
-            'Generating module...' => 'generateModule',
-            'Optimizing module cache...' => 'optimizeModules',
-        ];
+        $this->generateModule();
 
-        $progress = new ProgressBar($this->output, count($steps));
-        $progress->start();
-
-        foreach ($steps as $message => $function) {
-            $progress->setMessage($message);
-
-            $this->$function();
-
-            $progress->advance();
-        }
-
-        $progress->finish();
-
-        event($this->container['slug'] . '.module.made');
+        event('module.made', [$this->container['slug'], $this->option('location')]);
 
         $this->info("\nModule generated successfully.");
     }
@@ -145,6 +122,7 @@ class MakeModuleCommand extends Command
      */
     protected function stepOne()
     {
+        $location = $this->option('location');
         $this->displayHeader('make_module_step_1');
 
         $this->container['name'] = $this->ask('Please enter the name of the module:', $this->container['name']);
@@ -152,7 +130,7 @@ class MakeModuleCommand extends Command
         $this->container['version'] = $this->ask('Please enter the module version:', $this->container['version']);
         $this->container['description'] = $this->ask('Please enter the description of the module:', $this->container['description']);
         $this->container['basename'] = studly_case($this->container['slug']);
-        $this->container['namespace'] = config('modules.namespace') . $this->container['basename'];
+        $this->container['namespace'] = config("modules.locations.$location.namespace") . $this->container['basename'];
 
         $this->comment('You have provided the following manifest information:');
         $this->comment('Name:                       ' . $this->container['name']);
@@ -179,13 +157,24 @@ class MakeModuleCommand extends Command
      */
     protected function generateModule()
     {
-        if (!$this->files->isDirectory(module_path())) {
-            $this->files->makeDirectory(module_path());
+        $modulesDirectory = module_path(null, '', $this->option('location'));
+
+        if (!$this->files->isDirectory($modulesDirectory)) {
+            $this->files->makeDirectory($modulesDirectory);
         }
 
         $pathMap = config('modules.pathMap');
-        $directory = module_path(null, $this->container['basename']);
+        $directory = module_path(null, $this->container['basename'], $this->option('location'));
         $source = __DIR__ . '/../../../resources/stubs/module';
+
+//        if ($this->files->isDirectory($directory)) {
+//            throw new Exception("Directory already exists at [$directory]");
+//        }
+
+        // TODO REMOVE
+        if (app()->environment('testing')) {
+            $this->files->deleteDirectory($directory);
+        }
 
         $this->files->makeDirectory($directory);
 
@@ -236,13 +225,5 @@ class MakeModuleCommand extends Command
         ];
 
         return str_replace($find, $replace, $contents);
-    }
-
-    /**
-     * Reset module cache of enabled and disabled modules.
-     */
-    protected function optimizeModules()
-    {
-        return $this->callSilent('module:optimize');
     }
 }

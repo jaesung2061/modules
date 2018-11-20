@@ -11,7 +11,7 @@ class ModuleOptimizeCommand extends Command
      *
      * @var string
      */
-    protected $name = 'module:optimize';
+    protected $signature = 'module:optimize {--location=}';
 
     /**
      * The console command description.
@@ -28,9 +28,18 @@ class ModuleOptimizeCommand extends Command
     public function handle()
     {
         $this->info('Generating optimized module cache');
+        if ($this->option('location')) {
+            $repository = modules($this->option('location'));
 
-        $this->laravel['modules']->optimize();
+            $repository->optimize();
 
-        event('modules.optimized', [$this->laravel['modules']->all()]);
+            event('modules.optimized', [$repository->all()]);
+        } else {
+            foreach(modules()->repositories() as $repository) {
+                $repository->optimize();
+
+                event('modules.optimized', [$repository]);
+            }
+        }
     }
 }

@@ -3,7 +3,6 @@
 namespace Caffeinated\Modules\Console\Commands;
 
 use Illuminate\Console\Command;
-use Symfony\Component\Console\Input\InputArgument;
 
 class ModuleDisableCommand extends Command
 {
@@ -12,7 +11,7 @@ class ModuleDisableCommand extends Command
      *
      * @var string
      */
-    protected $name = 'module:disable';
+    protected $signature = 'module:disable {slug} {--location=}';
 
     /**
      * The console command description.
@@ -29,29 +28,18 @@ class ModuleDisableCommand extends Command
     public function handle()
     {
         $slug = $this->argument('slug');
+        $modules = modules($this->option('location'));
 
-        if ($this->laravel['modules']->isEnabled($slug)) {
-            $this->laravel['modules']->disable($slug);
+        if ($modules->isEnabled($slug)) {
+            $modules->disable($slug);
 
-            $module = $this->laravel['modules']->where('slug', $slug);
+            $module = $modules->where('slug', $slug);
 
-            event($slug.'.module.disabled', [$module, null]);
+            event('module.disabled', [$module['slug'], $this->option('location')]);
 
             $this->info('Module was disabled successfully.');
         } else {
             $this->comment('Module is already disabled.');
         }
-    }
-
-    /**
-     * Get the console command arguments.
-     *
-     * @return array
-     */
-    protected function getArguments()
-    {
-        return [
-            ['slug', InputArgument::REQUIRED, 'Module slug.'],
-        ];
     }
 }

@@ -16,7 +16,7 @@ class ModuleMigrateRefreshCommand extends Command
      *
      * @var string
      */
-    protected $name = 'module:migrate:refresh';
+    protected $signature = 'module:migrate:refresh {slug?} {--database=} {--location=} {--pretend} {--force} {--seed}';
 
     /**
      * The console command description.
@@ -43,21 +43,23 @@ class ModuleMigrateRefreshCommand extends Command
             '--database' => $this->option('database'),
             '--force'    => $this->option('force'),
             '--pretend'  => $this->option('pretend'),
+            '--location'  => $this->option('location'),
         ]);
 
         $this->call('module:migrate', [
             'slug'       => $slug,
             '--database' => $this->option('database'),
+            '--location' => $this->option('location'),
         ]);
 
         if ($this->needsSeeding()) {
-            $this->runSeeder($slug, $this->option('database'));
+            $this->runSeeder($slug, $this->option('database'), $this->option('location'));
         }
 
         if (isset($slug)) {
-            $module = $this->laravel['modules']->where('slug', $slug);
+            $module = modules($this->option('location'))->where('slug', $slug);
 
-            event($slug.'.module.refreshed', [$module, $this->option()]);
+            event('module.refreshed', [$module['slug'], $this->option('location')]);
 
             $this->info('Module has been refreshed.');
         } else {
@@ -78,38 +80,16 @@ class ModuleMigrateRefreshCommand extends Command
     /**
      * Run the module seeder command.
      *
+     * @param null $slug
      * @param string $database
+     * @param null $location
      */
-    protected function runSeeder($slug = null, $database = null)
+    protected function runSeeder($slug = null, $database = null, $location = null)
     {
         $this->call('module:seed', [
             'slug'       => $slug,
             '--database' => $database,
+            '--location' => $location,
         ]);
-    }
-
-    /**
-     * Get the console command arguments.
-     *
-     * @return array
-     */
-    protected function getArguments()
-    {
-        return [['slug', InputArgument::OPTIONAL, 'Module slug.']];
-    }
-
-    /**
-     * Get the console command options.
-     *
-     * @return array
-     */
-    protected function getOptions()
-    {
-        return [
-            ['database', null, InputOption::VALUE_OPTIONAL, 'The database connection to use.'],
-            ['force', null, InputOption::VALUE_NONE, 'Force the operation to run while in production.'],
-            ['pretend', null, InputOption::VALUE_NONE, 'Dump the SQL queries that would be run.'],
-            ['seed', null, InputOption::VALUE_NONE, 'Indicates if the seed task should be re-run.'],
-        ];
     }
 }

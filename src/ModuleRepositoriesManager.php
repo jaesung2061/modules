@@ -17,7 +17,7 @@ class ModuleRepositoriesManager
     /**
      * @return \Caffeinated\Modules\Contracts\Repository[]
      */
-    protected $repositories;
+    protected $repositories = [];
 
     /**
      * Create a new Modules instance.
@@ -165,6 +165,6 @@ class ModuleRepositoriesManager
      */
     public function __call($method, $arguments)
     {
-        return call_user_func_array([$this->repositories, $method], $arguments);
+        return call_user_func_array([$this->repository(), $method], $arguments);
     }
 }

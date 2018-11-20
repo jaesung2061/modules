@@ -2,7 +2,7 @@
 
 namespace Caffeinated\Modules\Console\Commands;
 
-use Caffeinated\Modules\Modules;
+use Caffeinated\Modules\ModuleRepositoriesFactory;
 use Illuminate\Console\Command;
 use Illuminate\Console\ConfirmableTrait;
 use Illuminate\Database\Migrations\Migrator;
@@ -19,7 +19,7 @@ class ModuleMigrateResetCommand extends Command
      *
      * @var string
      */
-    protected $name = 'module:migrate:reset';
+    protected $signature = 'module:migrate:reset {slug?} {--location=} {--database=} {--force} {--pretend} {--seed}';
 
     /**
      * The console command description.
@@ -27,11 +27,6 @@ class ModuleMigrateResetCommand extends Command
      * @var string
      */
     protected $description = 'Rollback all database migrations for a specific or all modules';
-
-    /**
-     * @var Modules
-     */
-    protected $module;
 
     /**
      * @var Migrator
@@ -46,15 +41,13 @@ class ModuleMigrateResetCommand extends Command
     /**
      * Create a new command instance.
      *
-     * @param Modules    $module
      * @param Filesystem $files
      * @param Migrator   $migrator
      */
-    public function __construct(Modules $module, Filesystem $files, Migrator $migrator)
+    public function __construct(Filesystem $files, Migrator $migrator)
     {
         parent::__construct();
 
-        $this->module = $module;
         $this->files = $files;
         $this->migrator = $migrator;
     }
@@ -79,8 +72,6 @@ class ModuleMigrateResetCommand extends Command
      * Migrations should be reset in the reverse order that they were
      * migrated up as. This ensures the database is properly reversed
      * without conflict.
-     *
-     * @param string $slug
      *
      * @return mixed
      */
@@ -110,9 +101,8 @@ class ModuleMigrateResetCommand extends Command
     /**
      * Run "down" a migration instance.
      *
-     * @param string $slug
+     * @param $file
      * @param object $migration
-     * @param bool   $pretend
      */
     protected function runDown($file, $migration)
     {
@@ -131,13 +121,13 @@ class ModuleMigrateResetCommand extends Command
      *
      * @return array
      */
-    protected function getMigrationPaths(){
+    protected function getMigrationPaths() {
         $migrationPaths = [];
 
         foreach ($this->getSlugsToReset() as $slug) {
             $migrationPaths[] = $this->getMigrationPath($slug);
 
-            event($slug.'.module.reset', [$this->module, $this->option()]);
+            event('module.reset', [$slug, $this->option('location')]);
         }
 
         return $migrationPaths;
@@ -151,14 +141,14 @@ class ModuleMigrateResetCommand extends Command
     protected function getSlugsToReset()
     {
         if ($this->validSlugProvided()) {
-            return [$this->argument("slug")];
+            return [$this->argument('slug')];
         }
 
         if ($this->option("force")) {
-            return $this->module->all()->pluck("slug");
+            return modules($this->option('location'))->all()->pluck('slug');
         }
 
-        return $this->module->enabled()->pluck("slug");
+        return modules($this->option('location'))->enabled()->pluck('slug');
     }
 
     /**
@@ -170,15 +160,15 @@ class ModuleMigrateResetCommand extends Command
      */
     protected function validSlugProvided()
     {
-        if (empty($this->argument("slug"))) {
+        if (empty($this->argument('slug'))) {
             return false;
         }
 
-        if ($this->module->isEnabled($this->argument("slug"))) {
+        if (modules($this->option('location'))->isEnabled($this->argument('slug'))) {
             return true;
         }
 
-        if ($this->option("force")) {
+        if ($this->option('force')) {
             return true;
         }
 
@@ -216,35 +206,11 @@ class ModuleMigrateResetCommand extends Command
     /**
      * Get migrations path.
      *
+     * @param $slug
      * @return string
      */
     protected function getMigrationPath($slug)
     {
         return module_path($slug, 'Database/Migrations');
-    }
-
-    /**
-     * Get the console command arguments.
-     *
-     * @return array
-     */
-    protected function getArguments()
-    {
-        return [['slug', InputArgument::OPTIONAL, 'Module slug.']];
-    }
-
-    /**
-     * Get the console command options.
-     *
-     * @return array
-     */
-    protected function getOptions()
-    {
-        return [
-            ['database', null, InputOption::VALUE_OPTIONAL, 'The database connection to use.'],
-            ['force', null, InputOption::VALUE_NONE, 'Force the operation to run while in production.'],
-            ['pretend', null, InputOption::VALUE_OPTIONAL, 'Dump the SQL queries that would be run.'],
-            ['seed', null, InputOption::VALUE_OPTIONAL, 'Indicates if the seed task should be re-run.'],
-        ];
     }
 }

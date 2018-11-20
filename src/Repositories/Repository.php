@@ -4,161 +4,145 @@ namespace Caffeinated\Modules\Repositories;
 
 use Exception;
 use Caffeinated\Modules\Contracts\Repository as RepositoryContract;
-use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\File;
+use Illuminate\Config\Repository as Config;
+use Illuminate\Filesystem\Filesystem;
 
-abstract class Repository implements RepositoryContract
+abstract class AbstractRepository implements RepositoryContract
 {
     /**
-     * @var string
+     * @var \Illuminate\Config\Repository
      */
-    public $location;
+    protected $config;
 
     /**
-     * @var \Illuminate\Support\Collection
+     * @var \Illuminate\Filesystem\Filesystem
      */
-    protected $modules;
+    protected $files;
 
-    protected $booted = false;
+    /**
+     * @var string Path to the defined modules directory
+     */
+    protected $path;
 
     /**
      * Constructor method.
      *
-     * @param $location
+     * @param \Illuminate\Config\Repository     $config
+     * @param \Illuminate\Filesystem\Filesystem $files
      */
-    public function __construct($location)
+    public function __construct(Config $config, Filesystem $files)
     {
-        $this->location = $location;
-    }
-
-    public function getPath()
-    {
-        return config("modules.locations.$this->location.path");
-    }
-
-    public function getNamespace()
-    {
-        return rtrim(config("modules.locations.$this->location.namespace"), '/\\');
-    }
-
-    public function boot()
-    {
-        $modules = $this->parseManifests();
-
-        $this->registerModules($modules);
-
-        $this->modules = $modules;
-
-        if (!$this->booted) {
-            // register event listeners
-            Event::listen('*.module.made', function ($slug) {
-                $this->boot();
-            });
-        }
-
-        $this->booted = true;
-    }
-
-    public function reboot()
-    {
-        $modules = $this->parseManifests();
-
-        $this->registerModules($modules);
-
-        $this->modules = $modules;
-    }
-
-    public function getManifest($moduleDirectory)
-    {
-        $manifest = json_decode(File::get($moduleDirectory.'/module.json'), true);
-
-        if (json_last_error() === JSON_ERROR_NONE) {
-            return collect($manifest);
-        }
-
-        throw new Exception("Your JSON manifest file in was not properly formatted. [$moduleDirectory]");
+        $this->config = $config;
+        $this->files = $files;
     }
 
     /**
-     * @param $moduleDirectory
+     * Get all module basenames.
+     *
+     * @return array
+     */
+    protected function getAllBasenames()
+    {
+        $path = $this->getPath();
+
+        try {
+            $collection = collect($this->files->directories($path));
+
+            $basenames = $collection->map(function ($item, $key) {
+                return basename($item);
+            });
+
+            return $basenames;
+        } catch (\InvalidArgumentException $e) {
+            return collect([]);
+        }
+    }
+
+    /**
+     * Get a module's manifest contents.
+     *
+     * @param string $slug
+     *
+     * @return Collection|null
+     */
+    public function getManifest($slug)
+    {
+        if (! is_null($slug)) {
+            $path     = $this->getManifestPath($slug);
+            $contents = $this->files->get($path);
+            $validate = @json_decode($contents, true);
+
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $collection = collect(json_decode($contents, true));
+
+                return $collection;
+            }
+
+            throw new Exception('['.$slug.'] Your JSON manifest file was not properly formatted. Check for formatting issues and try again.');
+        }
+    }
+
+    /**
+     * Get modules path.
+     *
      * @return string
      */
-    protected function getModuleNamespace($moduleDirectory)
+    public function getPath()
     {
-        return trim(array_last(explode(DIRECTORY_SEPARATOR, $moduleDirectory)), '\\');
+        return $this->path ?: $this->config->get('modules.path');
     }
 
     /**
-     * @return \Illuminate\Support\Collection
-     * @throws \Exception
-     */
-    protected function parseManifests()
-    {
-        $modules = collect();
-        $modulesRoot = $this->getPath();
-
-        if (! realpath($modulesRoot)) {
-            File::makeDirectory($modulesRoot);
-        }
-
-        foreach (File::directories($modulesRoot) as $moduleDirectory) {
-            $manifest = $this->getManifest($moduleDirectory);
-
-            // add base namespace to manifest
-            $manifest['id'] = crc32($manifest->get('slug'));
-            $manifest['path'] = $moduleDirectory;
-            $manifest['basename'] = $this->getModuleNamespace($moduleDirectory);
-            $manifest['order'] = $manifest['order'] ?? 9999;
-            $manifest['enabled'] = $manifest['enabled'] ?? config('modules.enabled');
-
-            $modules->put($manifest['slug'], $manifest);
-        };
-
-        return $modules->sort(function ($a, $b) {
-            $a = $a['order'];
-            $b = $b['order'];
-
-            if ($a == $b) {
-                return 0;
-            }
-
-            return ($a < $b) ? -1 : 1;
-        });
-    }
-
-    /**
-     * @param $modules
-     */
-    protected function registerModules($modules)
-    {
-        foreach ($modules as $module) {
-            $this->registerServiceProvider($module);
-
-            foreach ($module['autoload'] ?? [] as $file) {
-                $basePath = config("modules.locations.$this->location.path");
-                $basename = $this->getModuleNamespace($module['path']);
-                $filePath = "$basePath/$basename/$file";
-
-//                if (File::exists($filePath)) {
-                    require $filePath;
-//                }
-            }
-        }
-    }
-
-    /**
-     * Register the module service provider.
+     * Set modules path in "RunTime" mode.
      *
-     * @param $moduleDirectory
-     * @return void
+     * @param string $path
+     *
+     * @return object $this
      */
-    protected function registerServiceProvider($module)
+    public function setPath($path)
     {
-        $locationNamespace = trim(config("modules.locations.$this->location.namespace"), '\\');
-        $serviceProvider = $locationNamespace.'\\'.$module['basename'].'\\'.config('modules.provider_class');
+        $this->path = $path;
 
-        if (class_exists($serviceProvider)) {
-            app()->register($serviceProvider);
+        return $this;
+    }
+
+    /**
+     * Get path for the specified module.
+     *
+     * @param string $slug
+     *
+     * @return string
+     */
+    public function getModulePath($slug)
+    {
+        $module = studly_case(str_slug($slug));
+
+        if (\File::exists($this->getPath()."/{$module}/")) {
+            return $this->getPath()."/{$module}/";
         }
+
+        return $this->getPath()."/{$slug}/";
+    }
+
+    /**
+     * Get path of module manifest file.
+     *
+     * @param $slug
+     *
+     * @return string
+     */
+    protected function getManifestPath($slug)
+    {
+        return $this->getModulePath($slug).'module.json';
+    }
+
+    /**
+     * Get modules namespace.
+     *
+     * @return string
+     */
+    public function getNamespace()
+    {
+        return rtrim($this->config->get('modules.namespace'), '/\\');
     }
 }

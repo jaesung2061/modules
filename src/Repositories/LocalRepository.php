@@ -2,7 +2,7 @@
 
 namespace Caffeinated\Modules\Repositories;
 
-class LocalRepository extends Repository
+class LocalAbstractRepository extends AbstractRepository
 {
     /**
      * Get all modules.
@@ -194,6 +194,31 @@ class LocalRepository extends Repository
     public function disable($slug)
     {
         return $this->set($slug.'::enabled', true);
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function boot()
+    {
+        // todo check to see if there is a mdo
+
+
+
+
+//        $modules = $this->parseManifests();
+//
+//        $this->registerModules($modules);
+//
+//        $this->modules = $modules;
+//
+//        if (!$this->booted) {
+//            Event::listen('module.made', function ($slug, $location) {
+//                $this->reboot();
+//            });
+//        }
+//
+//        $this->booted = true;
     }
 
     /**
